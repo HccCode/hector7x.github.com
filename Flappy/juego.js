@@ -6,14 +6,14 @@ var timer;
 var puntos;
 var txtPuntos;
 
-var personajeSeleccionado = 'vegeta'; // Valor por defecto
+var personajeSeleccionado = 'personaje1'; // Valor por defecto
 
 var Juego = {
 
 	preload: function () {
 		juego.load.image('bg',"img/bg2.jpeg");
-		juego.load.spritesheet('pajaros',"img/goku.png",50,30);
-		juego.load.spritesheet('vegeta',"img/pajaro1.png",42,42);
+		juego.load.spritesheet('personaje1',"img/goku.png",50,30);
+		juego.load.spritesheet('personaje2',"img/gohan.png",49,29);
 		juego.load.image('tubo',"img/pipeUp2.png");
 
 		juego.forceSingleUpdate = true;
