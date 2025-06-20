@@ -4,7 +4,7 @@ var Menu = {
 		juego.stage.backgroundColor = "#FFF";
 		juego.load.image('boton',"img/btn.png");
 		juego.load.spritesheet('personaje1',"img/goku.png",50,30);
-		juego.load.spritesheet('personaje2',"img/Gohan.png",49,29);
+		juego.load.spritesheet('personaje2',"img/gohan.png",49,29);
 	},
 
 	create: function(){

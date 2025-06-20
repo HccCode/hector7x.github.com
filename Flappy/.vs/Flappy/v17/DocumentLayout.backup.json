@@ -32,7 +32,7 @@
               "RelativeDocumentMoniker": "Menu.js",
               "ToolTip": "C:\\hector7x.github.com\\Flappy\\Menu.js",
               "RelativeToolTip": "Menu.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAASAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-06-20T03:32:02.736Z",
               "EditorCaption": ""
@@ -47,8 +47,7 @@
               "RelativeToolTip": "juego.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAA7AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-06-20T03:22:41.511Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-06-20T03:22:41.511Z"
             },
             {
               "$type": "Document",
