@@ -45,7 +45,7 @@ var Menu = {
 		btnFrieza.anchor.setTo(0.5);
 		btnFrieza.alpha = 0.5;
 
-		// Botón de vegeta (nuevo)
+		// Botón de vegeta
 		var btnvegeta = juego.add.button(juego.width / 2 + 135, juego.height / 2 - 20, 'personaje4', function(){
 			personajeSeleccionado = 'personaje4';
 			btnGoku.alpha = 0.5;

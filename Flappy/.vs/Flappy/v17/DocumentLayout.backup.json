@@ -42,8 +42,7 @@
               "RelativeToolTip": "principal.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-06-23T04:51:30.067Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-06-23T04:51:30.067Z"
             },
             {
               "$type": "Document",
@@ -55,8 +54,7 @@
               "RelativeToolTip": "gameover.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAA1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-06-23T04:14:54.718Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-06-23T04:14:54.718Z"
             },
             {
               "$type": "Document",
@@ -81,8 +79,7 @@
               "RelativeToolTip": "juego.js",
               "ViewState": "AgIAAAMAAAAAAAAAAAAhwBUAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-06-20T05:32:30.59Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-06-20T05:32:30.59Z"
             }
           ]
         }
