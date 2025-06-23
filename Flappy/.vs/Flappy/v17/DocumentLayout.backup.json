@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\hector7x.github.com\\Flappy\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\juego.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:juego.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\Menu.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Menu.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\gameover.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}|",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:gameover.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\principal.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:principal.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\hector7x.github.com\\Flappy\\juego.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:juego.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,32 +26,62 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
             {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "juego.js",
-              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\juego.js",
-              "RelativeDocumentMoniker": "juego.js",
-              "ToolTip": "C:\\hector7x.github.com\\Flappy\\juego.js",
-              "RelativeToolTip": "juego.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAsAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "principal.js",
+              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\principal.js",
+              "RelativeDocumentMoniker": "principal.js",
+              "ToolTip": "C:\\hector7x.github.com\\Flappy\\principal.js",
+              "RelativeToolTip": "principal.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-06-20T05:32:30.59Z",
+              "WhenOpened": "2025-06-23T04:51:30.067Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "index.html",
-              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\index.html",
-              "RelativeDocumentMoniker": "index.html",
-              "ToolTip": "C:\\hector7x.github.com\\Flappy\\index.html",
-              "RelativeToolTip": "index.html",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2025-06-20T05:32:24.267Z",
+              "Title": "gameover.js",
+              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\gameover.js",
+              "RelativeDocumentMoniker": "gameover.js",
+              "ToolTip": "C:\\hector7x.github.com\\Flappy\\gameover.js",
+              "RelativeToolTip": "gameover.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-06-23T04:14:54.718Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Menu.js",
+              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\Menu.js",
+              "RelativeDocumentMoniker": "Menu.js",
+              "ToolTip": "C:\\hector7x.github.com\\Flappy\\Menu.js",
+              "RelativeToolTip": "Menu.js",
+              "ViewState": "AgIAACYAAAAAAAAAAAAhwEAAAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-06-20T05:54:47.384Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "juego.js",
+              "DocumentMoniker": "C:\\hector7x.github.com\\Flappy\\juego.js",
+              "RelativeDocumentMoniker": "juego.js",
+              "ToolTip": "C:\\hector7x.github.com\\Flappy\\juego.js",
+              "RelativeToolTip": "juego.js",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAhwBUAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-06-20T05:32:30.59Z",
               "EditorCaption": ""
             }
           ]
