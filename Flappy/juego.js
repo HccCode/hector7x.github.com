@@ -15,7 +15,7 @@ var personajeSeleccionado = 'personaje1'; // Valor por defecto
 var Juego = {
 
 	preload: function () {
-		juego.load.image('bg',"img/bg.jpeg");
+		juego.load.image('bg',"img/bg2.jpeg");
 		juego.load.spritesheet('personaje1',"img/goku.png",50,30);
 		juego.load.spritesheet('personaje2',"img/gohan.png",50,30);
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
