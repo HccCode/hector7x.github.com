@@ -20,7 +20,7 @@ var Juego = {
 		juego.load.spritesheet('personaje2',"img/gohan.png",50,30);
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26); // Nuevo personaje
-		juego.load.image('tubo',"img/tower.png");
+		juego.load.image('tubo',"img/pile.png");
 		juego.load.image('4star', "img/4star.png"); 
 
 		juego.forceSingleUpdate = true;
