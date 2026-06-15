@@ -1,5 +1,5 @@
 let bg;
-let suelo; // Variable para el suelo con paralaje
+let suelo; 
 let tubos;
 let flappy;
 let salto;
@@ -10,7 +10,8 @@ let estrellas;
 let estrellasObtenidas;
 let txtEstrellas;
 let imgEstrella;
-let emitterEstrellas; // Variable para el sistema de partículas
+let emitterEstrellas; 
+let emitterAura; // Nuevo emisor para el Aura
 let sonidoSalto;      
 let sonidoEstrella;  
 let sonidoFondo;      
@@ -25,7 +26,12 @@ const Juego = {
 		juego.load.spritesheet('personaje2',"img/gohan.png",50,30);
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
-		juego.load.image('tubo',"img/pile.png");
+		
+		// Cargamos las partes de los tubos
+		juego.load.image('pipe',"img/pipe.png");
+		juego.load.image('pipeUp',"img/pipeUp.png");
+		juego.load.image('pipeUp2',"img/pipeUp2.png");
+		
 		juego.load.image('4star', "img/4star.png"); 
 		juego.load.audio('salto', 'sound/jump.wav');
 		juego.load.audio('estrella', 'sound/star.wav'); 
@@ -35,36 +41,39 @@ const Juego = {
 	},
 
 	create() {
+		// Evita el temblor de subpíxeles
 		juego.renderer.renderSession.roundPixels = true;
-		// 1. FONDO LEJANO (Se moverá lento)
+
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 
-		// 2. CREACIÓN DEL SUELO PARA EFECTO PARALAJE
-		// Generamos una textura programática para no tener que añadir imágenes nuevas
 		const bmd = juego.add.bitmapData(370, 90);
-		bmd.ctx.fillStyle = '#5A3A22'; // Color tierra
+		bmd.ctx.fillStyle = '#5A3A22';
 		bmd.ctx.fillRect(0, 0, 370, 90);
-		bmd.ctx.fillStyle = '#4CAF50'; // Color pasto verde superior
+		bmd.ctx.fillStyle = '#4CAF50'; 
 		bmd.ctx.fillRect(0, 0, 370, 15);
-		
-		// Añadimos textura al suelo para que se note el movimiento
 		for (let i = 0; i < 60; i++) {
 			bmd.ctx.fillStyle = '#3E2723';
 			bmd.ctx.fillRect(Math.random() * 370, 15 + Math.random() * 75, 4, 4);
 		}
-		
-		// Añadimos el suelo en la posición Y=460 (justo donde el jugador pierde si toca)
 		suelo = juego.add.tileSprite(0, 460, 370, 90, bmd);
 
 		juego.physics.startSystem(Phaser.Physics.ARCADE);
 		
 		tubos = juego.add.group();
 		tubos.enableBody = true;
-		tubos.createMultiple(20, 'tubo');
 
 		estrellas = juego.add.group();
 		estrellas.enableBody = true;
 		estrellas.createMultiple(5, '4star');
+
+		// Aura del personaje (Estela)
+		emitterAura = juego.add.emitter(0, 0, 50);
+		emitterAura.makeParticles('4star'); 
+		emitterAura.setXSpeed(-100, -50); // Se mueve hacia atrás
+		emitterAura.setYSpeed(-20, 20);
+		emitterAura.setAlpha(0.6, 0, 400); // Se desvanece rápido
+		emitterAura.setScale(0.1, 0, 0.1, 0, 400); // Se encoge
+		emitterAura.start(false, 400, 50); // Emite continuamente
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
@@ -74,13 +83,11 @@ const Juego = {
 		juego.physics.arcade.enable(flappy);
 		flappy.body.gravity.y = 1200;
 
-		// 3. SISTEMA DE PARTÍCULAS (Explosión de estrellas)
-		emitterEstrellas = juego.add.emitter(0, 0, 50); // Pool de 50 partículas
+		// Explosión de estrellas
+		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
-		emitterEstrellas.gravity = 400; // Caen hacia abajo
-		// Escala de las partículas: Inician al 30% de su tamaño y se encogen al 0% a los 800ms
+		emitterEstrellas.gravity = 400; 
 		emitterEstrellas.setScale(0.3, 0, 0.3, 0, 800); 
-		// Velocidad aleatoria en la explosión
 		emitterEstrellas.setXSpeed(-150, 150);
 		emitterEstrellas.setYSpeed(-150, 150);
 
@@ -102,7 +109,8 @@ const Juego = {
 		timer = juego.time.events.loop(1500, this.crearColumna, this);
 
 		puntos = -1;
-		txtPuntos = juego.add.text(20, 20, "0", {font: "30px Arial", fill: "#FFF"});
+		const estiloMarcador = {font: "34px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5};
+		txtPuntos = juego.add.text(20, 20, "0", estiloMarcador);
 
 		estrellasObtenidas = 0;
 		imgEstrella = juego.add.sprite(juego.width - 70, 20, '4star');
@@ -110,35 +118,38 @@ const Juego = {
 		imgEstrella.height = 32;
 		imgEstrella.fixedToCamera = true;
 		
-		txtEstrellas = juego.add.text(juego.width - 30, 25, "0", {font: "30px Arial", fill: "#FFF"});
+		txtEstrellas = juego.add.text(juego.width - 30, 20, "0", estiloMarcador);
 		txtEstrellas.anchor.setTo(0, 0);
 		txtEstrellas.fixedToCamera = true;
 	},
 
 	update() {
+		// Posicionar el Aura detrás del jugador
+		emitterAura.x = flappy.x - 10;
+		emitterAura.y = flappy.y;
+
 		if (!flappy.inWorld) {
 			this.state.start('Game_Over');
 		} else if (flappy.position.y > 460) {
-			flappy.alive = false;
-			tubos.forEachAlive(t => t.body.velocity.x = 0);
-			this.state.start('Game_Over');
-		} else {
-			// MOVIMIENTO PARALAJE
-			// MOVIMIENTO PARALAJE (Sin decimales)
-			bg.tilePosition.x -= 1;   // Volvemos a 1 para evitar el temblor de sub-píxeles
-			suelo.tilePosition.x -= 4; // Aumentamos la velocidad del suelo para mantener la diferencia visual
+			this.tocoTubo(); // Reutilizamos la lógica del choque
+		} else if (flappy.alive) {
+			bg.tilePosition.x -= 1;   
+			suelo.tilePosition.x -= 4;  
 		}
 
 		juego.physics.arcade.overlap(flappy, tubos, this.tocoTubo, null, this);
 		juego.physics.arcade.overlap(flappy, estrellas, this.tomarEstrella, null, this);
 
-		flappy.animations.play('vuelo');
-		if (flappy.angle < 20) {
-			flappy.angle += 1;        
+		if (flappy.alive) {
+			flappy.animations.play('vuelo');
+			if (flappy.angle < 20) {
+				flappy.angle += 1;        
+			}
 		}
 	},
 	
 	saltar() {
+		if (!flappy.alive) return;
 		flappy.body.velocity.y = -350;
 		juego.add.tween(flappy).to({angle:-20}, 100).start();
 		if (sonidoSalto) sonidoSalto.play();
@@ -148,7 +159,13 @@ const Juego = {
 		const hueco = Math.floor(Math.random()*5)+1;
 		for(let i = 0; i < 8; i++) {
 			if(i !== hueco && i !== hueco+1) {
-				this.crearUnTubo(371, i*57.5);
+				
+				// Elegimos la imagen correcta (Cuerpo o Bordes del tubo)
+				let tipoTubo = 'pipe'; 
+				if (i === hueco - 1) tipoTubo = 'pipeUp2'; // Borde superior (Mira hacia abajo)
+				if (i === hueco + 2) tipoTubo = 'pipeUp';  // Borde inferior (Mira hacia arriba)
+
+				this.crearUnTubo(371, i*57.5, tipoTubo);
 			}
 		}
 		
@@ -173,40 +190,33 @@ const Juego = {
 		}
 	}, 
 	
-	crearUnTubo(x, y) {
-		const tubo = tubos.getFirstDead();
-		tubo.reset(x, y);
+	crearUnTubo(x, y, tipo) {
+		let tubo = tubos.getFirstDead();
+		if (!tubo) {
+			tubo = tubos.create(x, y, tipo);
+		} else {
+			tubo.loadTexture(tipo); // Cambiamos la textura si fue reciclado
+			tubo.reset(x, y);
+		}
 		tubo.body.velocity.x = -180;
 		tubo.checkWorldBounds = true;
 		tubo.outOfBoundsKill = true;
 	},
 
 	tomarEstrella(flappy, estrella) {
-		// Posicionar el emisor justo donde estaba la estrella que tocamos
 		emitterEstrellas.x = estrella.x + (estrella.width / 2);
 		emitterEstrellas.y = estrella.y + (estrella.height / 2);
-		
-		// Iniciar la explosión: true(explota), 800ms de vida, nulo, cantidad de partículas(12)
 		emitterEstrellas.start(true, 800, null, 12);
 
-		estrella.kill(); // Desaparece la estrella original
-		
+		estrella.kill(); 
 		estrellasObtenidas += 1;
 		txtEstrellas.text = estrellasObtenidas;
 		
 		if (sonidoEstrella) sonidoEstrella.play();
 
 		if (estrellasObtenidas >= 7) {
-			flappy.alive = false;
-			juego.time.events.remove(timer);
-			tubos.forEachAlive(t => t.body.velocity.x = 0);
-			flappy.body.gravity.y = 99999;
-
-			if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
-
 			juego.ganaste = true;
-			this.guardarRecord();
-			this.state.start('Game_Over');
+			this.tocoTubo(); // Forzamos el fin
 		}
 	},
 
@@ -214,25 +224,33 @@ const Juego = {
 		if (!flappy.alive) return;
 		
 		flappy.alive = false;
+		emitterAura.on = false; // Apagamos el aura
 		juego.time.events.remove(timer);
 		
 		tubos.forEachAlive(t => t.body.velocity.x = 0);
+		estrellas.forEachAlive(e => e.body.velocity.x = 0);
+
 		flappy.body.gravity.y = 99999;    
 
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
+		// Screen Shake y Destello
+		juego.camera.flash(0xffffff, 300); // Flash blanco rápido
+		juego.camera.shake(0.02, 300);     // Temblor de pantalla
+
 		this.guardarRecord();
+
+		// Esperamos medio segundo antes de ir a Game Over para apreciar el choque
+		juego.time.events.add(500, () => {
+			this.state.start('Game_Over');
+		}, this);
 	},
 
 	guardarRecord() {
 		const recordPuntos = Number(localStorage.getItem('recordPuntos')) || 0;
-		if (puntos > recordPuntos) {
-			localStorage.setItem('recordPuntos', puntos);
-		}
+		if (puntos > recordPuntos) localStorage.setItem('recordPuntos', puntos);
 		
 		const recordEstrellas = Number(localStorage.getItem('recordEstrellas')) || 0;
-		if (estrellasObtenidas > recordEstrellas) {
-			localStorage.setItem('recordEstrellas', estrellasObtenidas);
-		}
+		if (estrellasObtenidas > recordEstrellas) localStorage.setItem('recordEstrellas', estrellasObtenidas);
 	}
 };
