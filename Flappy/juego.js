@@ -35,6 +35,7 @@ const Juego = {
 	},
 
 	create() {
+		juego.renderer.renderSession.roundPixels = true;
 		// 1. FONDO LEJANO (Se moverá lento)
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 
@@ -123,8 +124,9 @@ const Juego = {
 			this.state.start('Game_Over');
 		} else {
 			// MOVIMIENTO PARALAJE
-			bg.tilePosition.x -= 0.5;   // Fondo lejano se mueve muy lento (0.5px)
-			suelo.tilePosition.x -= 3;  // El suelo se mueve rápido (~180px/s, simulando la velocidad de los tubos)
+			// MOVIMIENTO PARALAJE (Sin decimales)
+			bg.tilePosition.x -= 1;   // Volvemos a 1 para evitar el temblor de sub-píxeles
+			suelo.tilePosition.x -= 4; // Aumentamos la velocidad del suelo para mantener la diferencia visual
 		}
 
 		juego.physics.arcade.overlap(flappy, tubos, this.tocoTubo, null, this);
