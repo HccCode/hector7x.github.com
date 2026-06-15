@@ -18,6 +18,26 @@ let sonidoFondo;
 
 let personajeSeleccionado = 'personaje1'; 
 
+// MEJORA 1: DICCIONARIO DE ESTADÍSTICAS ÚNICAS
+const statsPersonajes = {
+    'personaje1': { // Goku: Balanceado
+        gravedad: 1200, salto: -350, auraColor: 0xFFFF00, // Aura Amarilla/Dorada
+        hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5
+    },
+    'personaje2': { // Gohan: Ligero (Ideal para principiantes)
+        gravedad: 900, salto: -300, auraColor: 0xFFFFFF, // Aura Blanca
+        hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5
+    },
+    'personaje3': { // Freezer: Flotador
+        gravedad: 700, salto: -240, auraColor: 0xAA00FF, // Aura Morada
+        hitboxW: 30, hitboxH: 14, offsetX: 16, offsetY: 3
+    },
+    'personaje4': { // Vegeta: Pesado y agresivo (Cae rápido, salta fuerte)
+        gravedad: 1500, salto: -420, auraColor: 0x0088FF, // Aura Azul
+        hitboxW: 28, hitboxH: 20, offsetX: 14, offsetY: 3
+    }
+};
+
 const Juego = {
 
 	preload() {
@@ -27,7 +47,7 @@ const Juego = {
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
 		
-		// VOLVEMOS A USAR LA IMAGEN ORIGINAL DEL TUBO
+		// Usamos el tubo original
 		juego.load.image('tubo',"img/pile.png");
 		
 		juego.load.image('4star', "img/4star.png"); 
@@ -58,19 +78,31 @@ const Juego = {
 		
 		tubos = juego.add.group();
 		tubos.enableBody = true;
-		// RE-AÑADIMOS ESTA LÍNEA PARA CREAR LOS TUBOS CORRECTAMENTE
 		tubos.createMultiple(20, 'tubo'); 
 
 		estrellas = juego.add.group();
 		estrellas.enableBody = true;
 		estrellas.createMultiple(5, '4star');
 
+        // Seleccionamos las estadísticas del personaje elegido
+        const stats = statsPersonajes[personajeSeleccionado];
+
+        // MEJORA 3: AURA DE KI PERSONALIZADA
+        // Generamos una partícula circular blanca mediante código
+        const bmdAura = juego.add.bitmapData(12, 12);
+        bmdAura.ctx.fillStyle = '#FFFFFF';
+        bmdAura.ctx.beginPath();
+        bmdAura.ctx.arc(6, 6, 6, 0, Math.PI * 2);
+        bmdAura.ctx.fill();
+        juego.cache.addImage('imgAura', null, bmdAura.canvas); // Guardamos la imagen en caché
+
 		emitterAura = juego.add.emitter(0, 0, 50);
-		emitterAura.makeParticles('4star'); 
+		emitterAura.makeParticles('imgAura'); 
+        emitterAura.forEach(p => p.tint = stats.auraColor); // Teñimos el aura según el personaje
 		emitterAura.setXSpeed(-100, -50); 
 		emitterAura.setYSpeed(-20, 20);
 		emitterAura.setAlpha(0.6, 0, 400); 
-		emitterAura.setScale(0.1, 0, 0.1, 0, 400); 
+		emitterAura.setScale(0.8, 0, 0.2, 0, 400); 
 		emitterAura.start(false, 400, 50); 
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
@@ -79,7 +111,11 @@ const Juego = {
 		flappy.animations.add('vuelo', [2,1,0], 10, true);
 
 		juego.physics.arcade.enable(flappy);
-		flappy.body.gravity.y = 1200;
+		
+        // MEJORA 2: HITBOXES Y GRAVEDAD ESPECÍFICA
+        flappy.body.gravity.y = stats.gravedad;
+        // Ajustamos la caja de colisión recortando los bordes transparentes
+        flappy.body.setSize(stats.hitboxW, stats.hitboxH, stats.offsetX, stats.offsetY);
 
 		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
@@ -145,8 +181,12 @@ const Juego = {
 	
 	saltar() {
 		if (!flappy.alive) return;
-		flappy.body.velocity.y = -350;
-		juego.add.tween(flappy).to({angle:-20}, 100).start();
+        
+        // El salto también depende del personaje seleccionado
+        const stats = statsPersonajes[personajeSeleccionado];
+		flappy.body.velocity.y = stats.salto;
+		
+        juego.add.tween(flappy).to({angle:-20}, 100).start();
 		if (sonidoSalto) sonidoSalto.play();
 	},
 	
@@ -154,7 +194,6 @@ const Juego = {
 		const hueco = Math.floor(Math.random()*5)+1;
 		for(let i = 0; i < 8; i++) {
 			if(i !== hueco && i !== hueco+1) {
-				// SIMPLIFICADO: Vuelve a usar crearUnTubo original
 				this.crearUnTubo(371, i*57.5);
 			}
 		}
