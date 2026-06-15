@@ -1,4 +1,5 @@
 let bg;
+let suelo; // Variable para el suelo con paralaje
 let tubos;
 let flappy;
 let salto;
@@ -9,6 +10,7 @@ let estrellas;
 let estrellasObtenidas;
 let txtEstrellas;
 let imgEstrella;
+let emitterEstrellas; // Variable para el sistema de partículas
 let sonidoSalto;      
 let sonidoEstrella;  
 let sonidoFondo;      
@@ -33,30 +35,58 @@ const Juego = {
 	},
 
 	create() {
-		bg = juego.add.tileSprite(0,0,370,550,'bg');
+		// 1. FONDO LEJANO (Se moverá lento)
+		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
+
+		// 2. CREACIÓN DEL SUELO PARA EFECTO PARALAJE
+		// Generamos una textura programática para no tener que añadir imágenes nuevas
+		const bmd = juego.add.bitmapData(370, 90);
+		bmd.ctx.fillStyle = '#5A3A22'; // Color tierra
+		bmd.ctx.fillRect(0, 0, 370, 90);
+		bmd.ctx.fillStyle = '#4CAF50'; // Color pasto verde superior
+		bmd.ctx.fillRect(0, 0, 370, 15);
+		
+		// Añadimos textura al suelo para que se note el movimiento
+		for (let i = 0; i < 60; i++) {
+			bmd.ctx.fillStyle = '#3E2723';
+			bmd.ctx.fillRect(Math.random() * 370, 15 + Math.random() * 75, 4, 4);
+		}
+		
+		// Añadimos el suelo en la posición Y=460 (justo donde el jugador pierde si toca)
+		suelo = juego.add.tileSprite(0, 460, 370, 90, bmd);
+
 		juego.physics.startSystem(Phaser.Physics.ARCADE);
 		
 		tubos = juego.add.group();
 		tubos.enableBody = true;
-		tubos.createMultiple(20,'tubo');
+		tubos.createMultiple(20, 'tubo');
 
 		estrellas = juego.add.group();
 		estrellas.enableBody = true;
-		estrellas.createMultiple(5, '4star'); // Pool de estrellas optimizado
+		estrellas.createMultiple(5, '4star');
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
 		flappy.anchor.setTo(0, 0.5);
-		flappy.animations.add('vuelo',[2,1,0],10,true);
+		flappy.animations.add('vuelo', [2,1,0], 10, true);
 
 		juego.physics.arcade.enable(flappy);
 		flappy.body.gravity.y = 1200;
+
+		// 3. SISTEMA DE PARTÍCULAS (Explosión de estrellas)
+		emitterEstrellas = juego.add.emitter(0, 0, 50); // Pool de 50 partículas
+		emitterEstrellas.makeParticles('4star');
+		emitterEstrellas.gravity = 400; // Caen hacia abajo
+		// Escala de las partículas: Inician al 30% de su tamaño y se encogen al 0% a los 800ms
+		emitterEstrellas.setScale(0.3, 0, 0.3, 0, 800); 
+		// Velocidad aleatoria en la explosión
+		emitterEstrellas.setXSpeed(-150, 150);
+		emitterEstrellas.setYSpeed(-150, 150);
 
 		// Sonidos
 		sonidoSalto = juego.add.audio('salto');
 		sonidoEstrella = juego.add.audio('estrella');
 		
-		// Manejo seguro del sonido de fondo
 		if (!sonidoFondo) {
 			sonidoFondo = juego.add.audio('fondo');
 		}
@@ -64,7 +94,6 @@ const Juego = {
 			sonidoFondo.loopFull(0.1); 
 		}
 
-		// Controles
 		salto = juego.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 		salto.onDown.add(this.saltar, this);
 		juego.input.onDown.add(this.saltar, this);
@@ -74,7 +103,6 @@ const Juego = {
 		puntos = -1;
 		txtPuntos = juego.add.text(20, 20, "0", {font: "30px Arial", fill: "#FFF"});
 
-		// UI Estrellas
 		estrellasObtenidas = 0;
 		imgEstrella = juego.add.sprite(juego.width - 70, 20, '4star');
 		imgEstrella.width = 32;
@@ -91,10 +119,12 @@ const Juego = {
 			this.state.start('Game_Over');
 		} else if (flappy.position.y > 460) {
 			flappy.alive = false;
-			tubos.forEachAlive(t => t.body.velocity.x = 0); // Función flecha
+			tubos.forEachAlive(t => t.body.velocity.x = 0);
 			this.state.start('Game_Over');
 		} else {
-			bg.tilePosition.x -= 1; 
+			// MOVIMIENTO PARALAJE
+			bg.tilePosition.x -= 0.5;   // Fondo lejano se mueve muy lento (0.5px)
+			suelo.tilePosition.x -= 3;  // El suelo se mueve rápido (~180px/s, simulando la velocidad de los tubos)
 		}
 
 		juego.physics.arcade.overlap(flappy, tubos, this.tocoTubo, null, this);
@@ -123,7 +153,6 @@ const Juego = {
 		puntos += 1;
 		txtPuntos.text = puntos;
 
-		// Creación optimizada de estrellas (Reciclaje)
 		if (puntos > 0 && puntos % 22 === 0) {
 			const yEstrella = (hueco + 0.5) * 57.5;
 			let estrella = estrellas.getFirstDead();
@@ -151,17 +180,24 @@ const Juego = {
 	},
 
 	tomarEstrella(flappy, estrella) {
-		estrella.kill();
+		// Posicionar el emisor justo donde estaba la estrella que tocamos
+		emitterEstrellas.x = estrella.x + (estrella.width / 2);
+		emitterEstrellas.y = estrella.y + (estrella.height / 2);
+		
+		// Iniciar la explosión: true(explota), 800ms de vida, nulo, cantidad de partículas(12)
+		emitterEstrellas.start(true, 800, null, 12);
+
+		estrella.kill(); // Desaparece la estrella original
+		
 		estrellasObtenidas += 1;
 		txtEstrellas.text = estrellasObtenidas;
+		
 		if (sonidoEstrella) sonidoEstrella.play();
 
 		if (estrellasObtenidas >= 7) {
 			flappy.alive = false;
 			juego.time.events.remove(timer);
-
 			tubos.forEachAlive(t => t.body.velocity.x = 0);
-
 			flappy.body.gravity.y = 99999;
 
 			if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
@@ -179,7 +215,6 @@ const Juego = {
 		juego.time.events.remove(timer);
 		
 		tubos.forEachAlive(t => t.body.velocity.x = 0);
-
 		flappy.body.gravity.y = 99999;    
 
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
