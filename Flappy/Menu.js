@@ -11,6 +11,7 @@ const Menu = {
 	},
 
 	create() {
+		juego.camera.flash(0x000000, 600);
 		// Fondo con paralaje en el menú
 		this.bgMenu = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 

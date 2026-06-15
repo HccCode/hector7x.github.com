@@ -18,12 +18,11 @@ let sonidoFondo;
 
 let personajeSeleccionado = 'personaje1'; 
 
-// Mantenemos la configuración estética y de hitboxes precisas para conservar las mejoras gráficas
-const configPersonajes = {
-    'personaje1': { auraColor: 0xFFFF00, hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5 }, // Goku: Aura Amarilla
-    'personaje2': { auraColor: 0xFFFFFF, hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5 }, // Gohan: Aura Blanca
-    'personaje3': { auraColor: 0xAA00FF, hitboxW: 30, hitboxH: 14, offsetX: 16, offsetY: 3 }, // Freezer: Aura Morada
-    'personaje4': { auraColor: 0x0088FF, hitboxW: 28, hitboxH: 20, offsetX: 14, offsetY: 3 }  // Vegeta: Aura Azul
+const coloresAura = {
+    'personaje1': 0xFFFF00, // Goku: Amarillo
+    'personaje2': 0xFFFFFF, // Gohan: Blanco
+    'personaje3': 0xAA00FF, // Freezer: Morado
+    'personaje4': 0x0088FF  // Vegeta: Azul
 };
 
 const Juego = {
@@ -34,10 +33,7 @@ const Juego = {
 		juego.load.spritesheet('personaje2',"img/gohan.png",50,30);
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
-		
-		// Usamos el archivo de textura original compatible
 		juego.load.image('tubo',"img/pile.png");
-		
 		juego.load.image('4star', "img/4star.png"); 
 		juego.load.audio('salto', 'sound/jump.wav');
 		juego.load.audio('estrella', 'sound/star.wav'); 
@@ -47,8 +43,10 @@ const Juego = {
 	},
 
 	create() {
-		// Evita el parpadeo y temblor visual del sub-renderizado
 		juego.renderer.renderSession.roundPixels = true;
+
+        // --- TRANSICIÓN: FADE IN AL INICIAR ---
+        juego.camera.flash(0x000000, 600);
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 
@@ -73,9 +71,8 @@ const Juego = {
 		estrellas.enableBody = true;
 		estrellas.createMultiple(5, '4star');
 
-		const config = configPersonajes[personajeSeleccionado];
+		const colorSeleccionado = coloresAura[personajeSeleccionado] || 0xFFFF00;
 
-		// Generación de partículas para el Aura de Ki
 		const bmdAura = juego.add.bitmapData(12, 12);
 		bmdAura.ctx.fillStyle = '#FFFFFF';
 		bmdAura.ctx.beginPath();
@@ -85,7 +82,7 @@ const Juego = {
 
 		emitterAura = juego.add.emitter(0, 0, 50);
 		emitterAura.makeParticles('imgAura'); 
-		emitterAura.forEach(p => p.tint = config.auraColor); // Tinte según el personaje seleccionado
+		emitterAura.forEach(p => p.tint = colorSeleccionado); 
 		emitterAura.setXSpeed(-100, -50); 
 		emitterAura.setYSpeed(-20, 20);
 		emitterAura.setAlpha(0.6, 0, 400); 
@@ -94,16 +91,11 @@ const Juego = {
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
-		flappy.anchor.setTo(0, 0.5);
+		flappy.anchor.setTo(0.5, 0.5); // Centramos el punto de anclaje para rotar bonito
 		flappy.animations.add('vuelo', [2,1,0], 10, true);
 
 		juego.physics.arcade.enable(flappy);
-		
-		// --- REGRESO A LA CONFIGURACIÓN DE GRAVEDAD DEFAULT DEL INICIO ---
 		flappy.body.gravity.y = 1200;
-		
-		// Ajustamos las hitboxes para que las colisiones sigan siendo ultra precisas y justas
-		flappy.body.setSize(config.hitboxW, config.hitboxH, config.offsetX, config.offsetY);
 
 		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
@@ -131,6 +123,7 @@ const Juego = {
 		puntos = -1;
 		const estiloMarcador = {font: "34px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5};
 		txtPuntos = juego.add.text(20, 20, "0", estiloMarcador);
+        txtPuntos.anchor.setTo(0, 0.5); // Anclaje centrado para que el "latido" se vea bien
 
 		estrellasObtenidas = 0;
 		imgEstrella = juego.add.sprite(juego.width - 70, 20, '4star');
@@ -138,13 +131,14 @@ const Juego = {
 		imgEstrella.height = 32;
 		imgEstrella.fixedToCamera = true;
 		
-		txtEstrellas = juego.add.text(juego.width - 30, 20, "0", estiloMarcador);
-		txtEstrellas.anchor.setTo(0, 0);
+		txtEstrellas = juego.add.text(juego.width - 30, 37, "0", estiloMarcador);
+		txtEstrellas.anchor.setTo(0, 0.5);
 		txtEstrellas.fixedToCamera = true;
 	},
 
 	update() {
-		emitterAura.x = flappy.x - 10;
+		// Ajuste para el Aura debido al cambio de anclaje
+		emitterAura.x = flappy.x - 20;
 		emitterAura.y = flappy.y;
 
 		if (!flappy.inWorld) {
@@ -170,9 +164,7 @@ const Juego = {
 	saltar() {
 		if (!flappy.alive) return;
 		
-		// --- REGRESO AL IMPULSO DE SALTO DEFAULT DEL INICIO ---
 		flappy.body.velocity.y = -350;
-		
 		juego.add.tween(flappy).to({angle:-20}, 100).start();
 		if (sonidoSalto) sonidoSalto.play();
 	},
@@ -187,6 +179,11 @@ const Juego = {
 		
 		puntos += 1;
 		txtPuntos.text = puntos;
+
+        // --- ANIMACIÓN DE PUNTOS: LATIDO DEL MARCADOR ---
+        if (puntos > 0) {
+            juego.add.tween(txtPuntos.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
+        }
 
 		if (puntos > 0 && puntos % 22 === 0) {
 			const yEstrella = (hueco + 0.5) * 57.5;
@@ -217,6 +214,10 @@ const Juego = {
 	},
 
 	tomarEstrella(flappy, estrella) {
+        // --- POP-UP FLOTANTE "+1" ---
+        let txtPlus = juego.add.text(estrella.x, estrella.y - 20, "+1", {font: "24px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 4});
+        juego.add.tween(txtPlus).to({y: txtPlus.y - 50, alpha: 0}, 800, Phaser.Easing.Cubic.Out, true).onComplete.add(() => txtPlus.kill());
+
 		emitterEstrellas.x = estrella.x + (estrella.width / 2);
 		emitterEstrellas.y = estrella.y + (estrella.height / 2);
 		emitterEstrellas.start(true, 800, null, 12);
@@ -224,12 +225,36 @@ const Juego = {
 		estrella.kill(); 
 		estrellasObtenidas += 1;
 		txtEstrellas.text = estrellasObtenidas;
+        
+        // Latido del marcador de estrellas
+        juego.add.tween(txtEstrellas.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
 		
 		if (sonidoEstrella) sonidoEstrella.play();
 
 		if (estrellasObtenidas >= 7) {
 			juego.ganaste = true;
-			this.tocoTubo(); 
+            
+            // --- NUEVA SECUENCIA ÉPICA DE VICTORIA ---
+            flappy.alive = false;
+            emitterAura.on = false; 
+            juego.time.events.remove(timer);
+            tubos.forEachAlive(t => t.body.velocity.x = 0);
+            estrellas.forEachAlive(e => e.body.velocity.x = 0);
+            
+            flappy.body.gravity.y = 0; // Se detiene la gravedad
+            flappy.body.velocity.y = -50; // El personaje flota hacia el cielo
+            flappy.tint = 0xFFD700; // Brilla en Dorado (Ki Divino)
+
+            if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
+
+            juego.camera.flash(0xFFFFFF, 500); // Destello blanco de victoria
+            juego.camera.fade(0x000000, 1500); // Fundido a negro lento
+
+            this.guardarRecord();
+
+            juego.time.events.add(1500, () => {
+                this.state.start('Game_Over');
+            }, this);
 		}
 	},
 
@@ -245,14 +270,18 @@ const Juego = {
 
 		flappy.body.gravity.y = 99999;    
 
+        // --- FEEDBACK VISUAL DE DAÑO EXTREMO ---
+        flappy.tint = 0xFF0000; // Se tiñe de sangre/rojo al golpearse
+
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
-		juego.camera.flash(0xffffff, 300); 
+		juego.camera.flash(0xFF0000, 300); // Flash rojo de dolor
 		juego.camera.shake(0.02, 300);     
+        juego.camera.fade(0x000000, 1000); // Fundido a negro (muerte)
 
 		this.guardarRecord();
 
-		juego.time.events.add(500, () => {
+		juego.time.events.add(1000, () => {
 			this.state.start('Game_Over');
 		}, this);
 	},
