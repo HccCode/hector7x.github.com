@@ -18,24 +18,12 @@ let sonidoFondo;
 
 let personajeSeleccionado = 'personaje1'; 
 
-// MEJORA 1: DICCIONARIO DE ESTADÍSTICAS ÚNICAS
-const statsPersonajes = {
-    'personaje1': { // Goku: Balanceado
-        gravedad: 1200, salto: -350, auraColor: 0xFFFF00, // Aura Amarilla/Dorada
-        hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5
-    },
-    'personaje2': { // Gohan: Ligero (Ideal para principiantes)
-        gravedad: 900, salto: -300, auraColor: 0xFFFFFF, // Aura Blanca
-        hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5
-    },
-    'personaje3': { // Freezer: Flotador
-        gravedad: 700, salto: -240, auraColor: 0xAA00FF, // Aura Morada
-        hitboxW: 30, hitboxH: 14, offsetX: 16, offsetY: 3
-    },
-    'personaje4': { // Vegeta: Pesado y agresivo (Cae rápido, salta fuerte)
-        gravedad: 1500, salto: -420, auraColor: 0x0088FF, // Aura Azul
-        hitboxW: 28, hitboxH: 20, offsetX: 14, offsetY: 3
-    }
+// Mantenemos la configuración estética y de hitboxes precisas para conservar las mejoras gráficas
+const configPersonajes = {
+    'personaje1': { auraColor: 0xFFFF00, hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5 }, // Goku: Aura Amarilla
+    'personaje2': { auraColor: 0xFFFFFF, hitboxW: 24, hitboxH: 20, offsetX: 12, offsetY: 5 }, // Gohan: Aura Blanca
+    'personaje3': { auraColor: 0xAA00FF, hitboxW: 30, hitboxH: 14, offsetX: 16, offsetY: 3 }, // Freezer: Aura Morada
+    'personaje4': { auraColor: 0x0088FF, hitboxW: 28, hitboxH: 20, offsetX: 14, offsetY: 3 }  // Vegeta: Aura Azul
 };
 
 const Juego = {
@@ -47,7 +35,7 @@ const Juego = {
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
 		
-		// Usamos el tubo original
+		// Usamos el archivo de textura original compatible
 		juego.load.image('tubo',"img/pile.png");
 		
 		juego.load.image('4star', "img/4star.png"); 
@@ -59,6 +47,7 @@ const Juego = {
 	},
 
 	create() {
+		// Evita el parpadeo y temblor visual del sub-renderizado
 		juego.renderer.renderSession.roundPixels = true;
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
@@ -84,21 +73,19 @@ const Juego = {
 		estrellas.enableBody = true;
 		estrellas.createMultiple(5, '4star');
 
-        // Seleccionamos las estadísticas del personaje elegido
-        const stats = statsPersonajes[personajeSeleccionado];
+		const config = configPersonajes[personajeSeleccionado];
 
-        // MEJORA 3: AURA DE KI PERSONALIZADA
-        // Generamos una partícula circular blanca mediante código
-        const bmdAura = juego.add.bitmapData(12, 12);
-        bmdAura.ctx.fillStyle = '#FFFFFF';
-        bmdAura.ctx.beginPath();
-        bmdAura.ctx.arc(6, 6, 6, 0, Math.PI * 2);
-        bmdAura.ctx.fill();
-        juego.cache.addImage('imgAura', null, bmdAura.canvas); // Guardamos la imagen en caché
+		// Generación de partículas para el Aura de Ki
+		const bmdAura = juego.add.bitmapData(12, 12);
+		bmdAura.ctx.fillStyle = '#FFFFFF';
+		bmdAura.ctx.beginPath();
+		bmdAura.ctx.arc(6, 6, 6, 0, Math.PI * 2);
+		bmdAura.ctx.fill();
+		juego.cache.addImage('imgAura', null, bmdAura.canvas);
 
 		emitterAura = juego.add.emitter(0, 0, 50);
 		emitterAura.makeParticles('imgAura'); 
-        emitterAura.forEach(p => p.tint = stats.auraColor); // Teñimos el aura según el personaje
+		emitterAura.forEach(p => p.tint = config.auraColor); // Tinte según el personaje seleccionado
 		emitterAura.setXSpeed(-100, -50); 
 		emitterAura.setYSpeed(-20, 20);
 		emitterAura.setAlpha(0.6, 0, 400); 
@@ -112,10 +99,11 @@ const Juego = {
 
 		juego.physics.arcade.enable(flappy);
 		
-        // MEJORA 2: HITBOXES Y GRAVEDAD ESPECÍFICA
-        flappy.body.gravity.y = stats.gravedad;
-        // Ajustamos la caja de colisión recortando los bordes transparentes
-        flappy.body.setSize(stats.hitboxW, stats.hitboxH, stats.offsetX, stats.offsetY);
+		// --- REGRESO A LA CONFIGURACIÓN DE GRAVEDAD DEFAULT DEL INICIO ---
+		flappy.body.gravity.y = 1200;
+		
+		// Ajustamos las hitboxes para que las colisiones sigan siendo ultra precisas y justas
+		flappy.body.setSize(config.hitboxW, config.hitboxH, config.offsetX, config.offsetY);
 
 		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
@@ -181,12 +169,11 @@ const Juego = {
 	
 	saltar() {
 		if (!flappy.alive) return;
-        
-        // El salto también depende del personaje seleccionado
-        const stats = statsPersonajes[personajeSeleccionado];
-		flappy.body.velocity.y = stats.salto;
 		
-        juego.add.tween(flappy).to({angle:-20}, 100).start();
+		// --- REGRESO AL IMPULSO DE SALTO DEFAULT DEL INICIO ---
+		flappy.body.velocity.y = -350;
+		
+		juego.add.tween(flappy).to({angle:-20}, 100).start();
 		if (sonidoSalto) sonidoSalto.play();
 	},
 	
