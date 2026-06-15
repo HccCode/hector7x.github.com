@@ -9,8 +9,11 @@ var estrellas;
 var estrellasObtenidas;
 var txtEstrellas;
 var imgEstrella;
+var sonidoSalto;      
+var sonidoEstrella;  
+var sonidoFondo;      // Sonido de fondo
 
-var personajeSeleccionado = 'personaje1'; // Valor por defecto
+var personajeSeleccionado = 'personaje1'; 
 
 var Juego = {
 
@@ -19,9 +22,12 @@ var Juego = {
 		juego.load.spritesheet('personaje1',"img/goku.png",50,30);
 		juego.load.spritesheet('personaje2',"img/gohan.png",50,30);
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
-		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26); // Nuevo personaje
+		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
 		juego.load.image('tubo',"img/pile.png");
 		juego.load.image('4star', "img/4star.png"); 
+		juego.load.audio('salto', 'sound/jump.wav');
+		juego.load.audio('estrella', 'sound/star.wav'); 
+		juego.load.audio('fondo', 'sound/ambiente.ogg'); // Carga el sonido de fondo
 
 		juego.forceSingleUpdate = true;
 	},
@@ -43,6 +49,12 @@ var Juego = {
 
 		juego.physics.arcade.enable(flappy);
 		flappy.body.gravity.y = 1200;
+
+		// Sonidos
+		sonidoSalto = juego.add.audio('salto');
+		sonidoEstrella = juego.add.audio('estrella');
+		sonidoFondo = juego.add.audio('fondo');
+		sonidoFondo.loopFull(0.1); // Reproduce en bucle, volumen 0.3 (ajusta si lo deseas)
 
 		// Soporte teclado
 		salto = juego.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -100,6 +112,7 @@ var Juego = {
 	saltar: function(){
 		flappy.body.velocity.y = -350;
 		juego.add.tween(flappy).to({angle:-20}, 100).start();
+		if (sonidoSalto) sonidoSalto.play();
 	},
 	
 	crearColumna: function(){
@@ -140,6 +153,7 @@ var Juego = {
 		estrella.kill();
 		estrellasObtenidas += 1;
 		txtEstrellas.text = estrellasObtenidas;
+		if (sonidoEstrella) sonidoEstrella.play();
 
 		if (estrellasObtenidas >= 7) {
 			flappy.alive = false;
@@ -151,6 +165,9 @@ var Juego = {
 
 			flappy.body.gravity.y = 99999;
 
+			// Detener sonido de fondo
+			if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
+
 			// Guardar bandera de victoria
 			juego.ganaste = true;
 
@@ -160,7 +177,7 @@ var Juego = {
 			this.state.start('Game_Over');
 		}
 	},
-	
+
 	tocoTubo: function(){
 		if(flappy.alive == false)
 			return;
@@ -172,6 +189,9 @@ var Juego = {
 		}, this);
 
 		flappy.body.gravity.y = 99999;    
+
+		// Detener sonido de fondo
+		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
 		// Guardar récords
 		this.guardarRecord();
