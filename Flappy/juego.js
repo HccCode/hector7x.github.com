@@ -11,7 +11,7 @@ let estrellasObtenidas;
 let txtEstrellas;
 let imgEstrella;
 let emitterEstrellas; 
-let emitterAura; // Nuevo emisor para el Aura
+let emitterAura; 
 let sonidoSalto;      
 let sonidoEstrella;  
 let sonidoFondo;      
@@ -27,10 +27,8 @@ const Juego = {
 		juego.load.spritesheet('personaje3',"img/GoldenFrieza.png",64,20); 
 		juego.load.spritesheet('personaje4',"img/vegeta.png",56,26);
 		
-		// Cargamos las partes de los tubos
-		juego.load.image('pipe',"img/pipe.png");
-		juego.load.image('pipeUp',"img/pipeUp.png");
-		juego.load.image('pipeUp2',"img/pipeUp2.png");
+		// VOLVEMOS A USAR LA IMAGEN ORIGINAL DEL TUBO
+		juego.load.image('tubo',"img/pile.png");
 		
 		juego.load.image('4star', "img/4star.png"); 
 		juego.load.audio('salto', 'sound/jump.wav');
@@ -41,7 +39,6 @@ const Juego = {
 	},
 
 	create() {
-		// Evita el temblor de subpíxeles
 		juego.renderer.renderSession.roundPixels = true;
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
@@ -61,19 +58,20 @@ const Juego = {
 		
 		tubos = juego.add.group();
 		tubos.enableBody = true;
+		// RE-AÑADIMOS ESTA LÍNEA PARA CREAR LOS TUBOS CORRECTAMENTE
+		tubos.createMultiple(20, 'tubo'); 
 
 		estrellas = juego.add.group();
 		estrellas.enableBody = true;
 		estrellas.createMultiple(5, '4star');
 
-		// Aura del personaje (Estela)
 		emitterAura = juego.add.emitter(0, 0, 50);
 		emitterAura.makeParticles('4star'); 
-		emitterAura.setXSpeed(-100, -50); // Se mueve hacia atrás
+		emitterAura.setXSpeed(-100, -50); 
 		emitterAura.setYSpeed(-20, 20);
-		emitterAura.setAlpha(0.6, 0, 400); // Se desvanece rápido
-		emitterAura.setScale(0.1, 0, 0.1, 0, 400); // Se encoge
-		emitterAura.start(false, 400, 50); // Emite continuamente
+		emitterAura.setAlpha(0.6, 0, 400); 
+		emitterAura.setScale(0.1, 0, 0.1, 0, 400); 
+		emitterAura.start(false, 400, 50); 
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
@@ -83,7 +81,6 @@ const Juego = {
 		juego.physics.arcade.enable(flappy);
 		flappy.body.gravity.y = 1200;
 
-		// Explosión de estrellas
 		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
 		emitterEstrellas.gravity = 400; 
@@ -91,7 +88,6 @@ const Juego = {
 		emitterEstrellas.setXSpeed(-150, 150);
 		emitterEstrellas.setYSpeed(-150, 150);
 
-		// Sonidos
 		sonidoSalto = juego.add.audio('salto');
 		sonidoEstrella = juego.add.audio('estrella');
 		
@@ -124,14 +120,13 @@ const Juego = {
 	},
 
 	update() {
-		// Posicionar el Aura detrás del jugador
 		emitterAura.x = flappy.x - 10;
 		emitterAura.y = flappy.y;
 
 		if (!flappy.inWorld) {
 			this.state.start('Game_Over');
 		} else if (flappy.position.y > 460) {
-			this.tocoTubo(); // Reutilizamos la lógica del choque
+			this.tocoTubo(); 
 		} else if (flappy.alive) {
 			bg.tilePosition.x -= 1;   
 			suelo.tilePosition.x -= 4;  
@@ -159,13 +154,8 @@ const Juego = {
 		const hueco = Math.floor(Math.random()*5)+1;
 		for(let i = 0; i < 8; i++) {
 			if(i !== hueco && i !== hueco+1) {
-				
-				// Elegimos la imagen correcta (Cuerpo o Bordes del tubo)
-				let tipoTubo = 'pipe'; 
-				if (i === hueco - 1) tipoTubo = 'pipeUp2'; // Borde superior (Mira hacia abajo)
-				if (i === hueco + 2) tipoTubo = 'pipeUp';  // Borde inferior (Mira hacia arriba)
-
-				this.crearUnTubo(371, i*57.5, tipoTubo);
+				// SIMPLIFICADO: Vuelve a usar crearUnTubo original
+				this.crearUnTubo(371, i*57.5);
 			}
 		}
 		
@@ -190,17 +180,14 @@ const Juego = {
 		}
 	}, 
 	
-	crearUnTubo(x, y, tipo) {
-		let tubo = tubos.getFirstDead();
-		if (!tubo) {
-			tubo = tubos.create(x, y, tipo);
-		} else {
-			tubo.loadTexture(tipo); // Cambiamos la textura si fue reciclado
+	crearUnTubo(x, y) {
+		const tubo = tubos.getFirstDead();
+		if (tubo) {
 			tubo.reset(x, y);
+			tubo.body.velocity.x = -180;
+			tubo.checkWorldBounds = true;
+			tubo.outOfBoundsKill = true;
 		}
-		tubo.body.velocity.x = -180;
-		tubo.checkWorldBounds = true;
-		tubo.outOfBoundsKill = true;
 	},
 
 	tomarEstrella(flappy, estrella) {
@@ -216,7 +203,7 @@ const Juego = {
 
 		if (estrellasObtenidas >= 7) {
 			juego.ganaste = true;
-			this.tocoTubo(); // Forzamos el fin
+			this.tocoTubo(); 
 		}
 	},
 
@@ -224,7 +211,7 @@ const Juego = {
 		if (!flappy.alive) return;
 		
 		flappy.alive = false;
-		emitterAura.on = false; // Apagamos el aura
+		emitterAura.on = false; 
 		juego.time.events.remove(timer);
 		
 		tubos.forEachAlive(t => t.body.velocity.x = 0);
@@ -234,13 +221,11 @@ const Juego = {
 
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
-		// Screen Shake y Destello
-		juego.camera.flash(0xffffff, 300); // Flash blanco rápido
-		juego.camera.shake(0.02, 300);     // Temblor de pantalla
+		juego.camera.flash(0xffffff, 300); 
+		juego.camera.shake(0.02, 300);     
 
 		this.guardarRecord();
 
-		// Esperamos medio segundo antes de ir a Game Over para apreciar el choque
 		juego.time.events.add(500, () => {
 			this.state.start('Game_Over');
 		}, this);

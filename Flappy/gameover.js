@@ -25,7 +25,7 @@ const Game_Over = {
         const txtTitulo = juego.add.text(juego.width/2, juego.height/2 - 160, mensaje, estiloTitulo);
         txtTitulo.anchor.setTo(0.5);
 
-        const txtPuntosEtiqueta = juego.add.text(juego.width/2, juego.height/2 - 100, "PUNTUACIÓN ACTUAL", estiloTexto);
+        const txtPuntosEtiqueta = juego.add.text(juego.width/2, juego.height/2 - 100, "PUNTUACION ACTUAL", estiloTexto);
         txtPuntosEtiqueta.anchor.setTo(0.5);
         
         if (puntos === -1) puntos = 0;
@@ -39,7 +39,7 @@ const Game_Over = {
         const txtRecord = juego.add.text(
             juego.width/2, 
             juego.height/2 + 60, 
-            `RÉCORDS\n${recordPuntos} PUNTOS | ${recordEstrellas} ESTRELLAS`, 
+            `RECORDS\n${recordPuntos} PUNTOS | ${recordEstrellas} ESTRELLAS`, 
             estiloTexto
         );
         txtRecord.anchor.setTo(0.5);
@@ -47,7 +47,7 @@ const Game_Over = {
         const boton = this.add.button(juego.width/2, juego.height/2 + 160, 'boton', this.irAMenu, this);
         boton.anchor.setTo(0.5);
 
-        const txtBoton = juego.add.text(juego.width/2, juego.height/2 + 160, "VOLVER AL MENÚ", {font: "20px Impact", fill:"#FFF", stroke:"#000", strokeThickness: 3});
+        const txtBoton = juego.add.text(juego.width/2, juego.height/2 + 160, "VOLVER AL MENU", {font: "20px Impact", fill:"#FFF", stroke:"#000", strokeThickness: 3});
         txtBoton.anchor.setTo(0.5);
 
         juego.ganaste = false;
