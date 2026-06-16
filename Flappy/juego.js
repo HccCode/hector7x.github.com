@@ -1,31 +1,35 @@
 let bg;
 let suelo; 
+let grupoNubes;        // NUEVO: Grupo para las nubes de fondo
 let tubos;
 let flappy;
 let salto;
 let timer;
 let puntos;
 let txtPuntos;
+let txtPreparate;      // NUEVO: Texto de "Get Ready"
 let estrellas;
 let estrellasObtenidas;
 let txtEstrellas;
 let imgEstrella;
 let emitterEstrellas; 
 let emitterAura; 
-let emitterSalto;      // NUEVO: Emisor para el humo al saltar
-let grupoLineas;       // NUEVO: Grupo para las líneas de velocidad
-let grupoEstrellasNoche; // NUEVO: Grupo para el cielo nocturno
+let emitterSalto;      
+let emitterChoque;     // NUEVO: Emisor de escombros
+let grupoLineas;       
+let grupoEstrellasNoche; 
 let sonidoSalto;      
 let sonidoEstrella;  
 let sonidoFondo;      
 
 let personajeSeleccionado = 'personaje1'; 
+let juegoIniciado = false; // NUEVO: Control de inicio de partida
 
 const coloresAura = {
-    'personaje1': 0xFFFF00, // Goku: Amarillo
-    'personaje2': 0xFFFFFF, // Gohan: Blanco
-    'personaje3': 0xAA00FF, // Freezer: Morado
-    'personaje4': 0x0088FF  // Vegeta: Azul
+    'personaje1': 0xFFFF00, 
+    'personaje2': 0xFFFFFF, 
+    'personaje3': 0xAA00FF, 
+    'personaje4': 0x0088FF  
 };
 
 const Juego = {
@@ -47,29 +51,45 @@ const Juego = {
 
 	create() {
 		juego.renderer.renderSession.roundPixels = true;
+        juegoIniciado = false; // El juego empieza pausado
 
         juego.camera.flash(0x000000, 600);
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
-        bg.tint = 0xFFFFFF; // Día
+        bg.tint = 0xFFFFFF; 
 
-        // NUEVO: Capa de estrellas nocturnas (Detrás del suelo y los tubos)
         grupoEstrellasNoche = juego.add.group();
 
-		const bmd = juego.add.bitmapData(370, 90);
-		bmd.ctx.fillStyle = '#5A3A22';
-		bmd.ctx.fillRect(0, 0, 370, 90);
-		bmd.ctx.fillStyle = '#4CAF50'; 
-		bmd.ctx.fillRect(0, 0, 370, 15);
+        // NUEVO: Generación de Nubes por código
+        const bmdNube = juego.add.bitmapData(60, 30);
+        bmdNube.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        bmdNube.ctx.beginPath();
+        bmdNube.ctx.arc(20, 15, 15, 0, Math.PI * 2);
+        bmdNube.ctx.arc(40, 15, 15, 0, Math.PI * 2);
+        bmdNube.ctx.arc(30, 8, 15, 0, Math.PI * 2);
+        bmdNube.ctx.fill();
+        juego.cache.addImage('imgNube', null, bmdNube.canvas);
+
+        grupoNubes = juego.add.group();
+        // Colocamos algunas nubes iniciales
+        for (let i = 0; i < 4; i++) {
+            let nube = grupoNubes.create(Math.random() * 370, Math.random() * 250, 'imgNube');
+            nube.scale.setTo(Math.random() * 0.5 + 0.5);
+        }
+
+		const bmdSuelo = juego.add.bitmapData(370, 90);
+		bmdSuelo.ctx.fillStyle = '#5A3A22';
+		bmdSuelo.ctx.fillRect(0, 0, 370, 90);
+		bmdSuelo.ctx.fillStyle = '#4CAF50'; 
+		bmdSuelo.ctx.fillRect(0, 0, 370, 15);
 		for (let i = 0; i < 60; i++) {
-			bmd.ctx.fillStyle = '#3E2723';
-			bmd.ctx.fillRect(Math.random() * 370, 15 + Math.random() * 75, 4, 4);
+			bmdSuelo.ctx.fillStyle = '#3E2723';
+			bmdSuelo.ctx.fillRect(Math.random() * 370, 15 + Math.random() * 75, 4, 4);
 		}
-		suelo = juego.add.tileSprite(0, 460, 370, 90, bmd);
+		suelo = juego.add.tileSprite(0, 460, 370, 90, bmdSuelo);
 
 		juego.physics.startSystem(Phaser.Physics.ARCADE);
 		
-        // NUEVO: Generación de Líneas de Velocidad (Viento anime)
         const bmdLinea = juego.add.bitmapData(80, 2);
         bmdLinea.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         bmdLinea.ctx.fillRect(0, 0, 80, 2);
@@ -88,7 +108,6 @@ const Juego = {
 
 		const colorSeleccionado = coloresAura[personajeSeleccionado] || 0xFFFF00;
 
-        // Partículas del Aura de Ki
 		const bmdAura = juego.add.bitmapData(12, 12);
 		bmdAura.ctx.fillStyle = '#FFFFFF';
 		bmdAura.ctx.beginPath();
@@ -103,16 +122,28 @@ const Juego = {
 		emitterAura.setYSpeed(-20, 20);
 		emitterAura.setAlpha(0.6, 0, 400); 
 		emitterAura.setScale(0.8, 0, 0.2, 0, 400); 
-		emitterAura.start(false, 400, 50); 
 
-        // NUEVO: Partículas para el Polvo al Saltar
         emitterSalto = juego.add.emitter(0, 0, 30);
-        emitterSalto.makeParticles('imgAura'); // Reciclamos la imagen del aura redonda
-        emitterSalto.forEach(p => p.tint = 0xDDDDDD); // Color humo gris claro
-        emitterSalto.setXSpeed(-120, -50); // Sale empujado hacia atrás
-        emitterSalto.setYSpeed(50, 150);   // Cae hacia abajo al saltar
+        emitterSalto.makeParticles('imgAura'); 
+        emitterSalto.forEach(p => p.tint = 0xDDDDDD); 
+        emitterSalto.setXSpeed(-120, -50); 
+        emitterSalto.setYSpeed(50, 150);   
         emitterSalto.setAlpha(0.8, 0, 500); 
         emitterSalto.setScale(0.8, 0, 0.8, 0, 500); 
+
+        // NUEVO: Partículas cuadradas para los escombros de los tubos
+        const bmdEscombro = juego.add.bitmapData(8, 8);
+        bmdEscombro.ctx.fillStyle = '#7CB342'; // Color verde tubo
+        bmdEscombro.ctx.fillRect(0, 0, 8, 8);
+        juego.cache.addImage('imgEscombro', null, bmdEscombro.canvas);
+
+        emitterChoque = juego.add.emitter(0, 0, 30);
+        emitterChoque.makeParticles('imgEscombro');
+        emitterChoque.gravity = 600;
+        emitterChoque.setXSpeed(-200, 200);
+        emitterChoque.setYSpeed(-300, 100);
+        emitterChoque.setAlpha(1, 0, 1000);
+        emitterChoque.bounce.setTo(0.5, 0.5); // Rebotan un poco
 
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
@@ -120,7 +151,11 @@ const Juego = {
 		flappy.animations.add('vuelo', [2,1,0], 10, true);
 
 		juego.physics.arcade.enable(flappy);
-		flappy.body.gravity.y = 1200;
+		// La gravedad empieza en 0 para que flote al inicio
+        flappy.body.gravity.y = 0;
+
+        // NUEVO: Animación de flotar mientras espera
+        this.tweenFlote = juego.add.tween(flappy).to({y: 235}, 500, Phaser.Easing.Sinusoidal.InOut, true, 0, -1, true);
 
 		emitterEstrellas = juego.add.emitter(0, 0, 50); 
 		emitterEstrellas.makeParticles('4star');
@@ -143,9 +178,7 @@ const Juego = {
 		salto.onDown.add(this.saltar, this);
 		juego.input.onDown.add(this.saltar, this);
 
-		timer = juego.time.events.loop(1500, this.crearColumna, this);
-
-		puntos = -1;
+		puntos = 0; // Ahora inicia en 0 correctamente
 		const estiloMarcador = {font: "34px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5};
 		txtPuntos = juego.add.text(20, 20, "0", estiloMarcador);
         txtPuntos.anchor.setTo(0, 0.5); 
@@ -159,9 +192,31 @@ const Juego = {
 		txtEstrellas = juego.add.text(juego.width - 30, 37, "0", estiloMarcador);
 		txtEstrellas.anchor.setTo(0, 0.5);
 		txtEstrellas.fixedToCamera = true;
+
+        // NUEVO: Texto de Get Ready
+        txtPreparate = juego.add.text(juego.width/2, juego.height/2 + 50, "TOCA PARA VOLAR", {font: "28px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 5, align: "center"});
+        txtPreparate.anchor.setTo(0.5);
+        juego.add.tween(txtPreparate.scale).to({x: 1.1, y: 1.1}, 500, Phaser.Easing.Sinusoidal.InOut, true, 0, -1, true);
 	},
 
 	update() {
+        // Las nubes y el fondo se mueven incluso en la pantalla de espera
+        bg.tilePosition.x -= 0.5;   
+        suelo.tilePosition.x -= 4;  
+        
+        grupoNubes.forEachAlive(nube => {
+            nube.x -= 1.5; // Velocidad de paralaje intermedia
+            if (nube.x < -60) {
+                nube.x = 400;
+                nube.y = Math.random() * 250;
+            }
+        });
+
+        if (!juegoIniciado) {
+            flappy.animations.play('vuelo');
+            return; // Detenemos el resto del update si no ha iniciado
+        }
+
 		emitterAura.x = flappy.x - 20;
 		emitterAura.y = flappy.y;
 
@@ -170,11 +225,7 @@ const Juego = {
 		} else if (flappy.position.y > 460) {
 			this.tocoTubo(); 
 		} else if (flappy.alive) {
-			bg.tilePosition.x -= 1;   
-			suelo.tilePosition.x -= 4;  
-
-            // NUEVO: Spawneo aleatorio de Líneas de Velocidad (Viento Anime)
-            if (Math.random() < 0.15) { // 15% de probabilidad por fotograma
+            if (Math.random() < 0.15) { 
                 let linea = grupoLineas.getFirstDead();
                 const yRandom = Math.random() * 450;
                 if (!linea) {
@@ -182,7 +233,7 @@ const Juego = {
                 } else {
                     linea.reset(400, yRandom);
                 }
-                linea.body.velocity.x = -600; // Pasan extremadamente rápido
+                linea.body.velocity.x = -600; 
                 linea.checkWorldBounds = true;
                 linea.outOfBoundsKill = true;
             }
@@ -200,15 +251,24 @@ const Juego = {
 	},
 	
 	saltar() {
-		if (!flappy.alive) return;
+        if (!flappy.alive) return;
+
+        // Lógica de inicio al dar el primer salto
+        if (!juegoIniciado) {
+            juegoIniciado = true;
+            this.tweenFlote.stop(); // Detenemos la animación de espera
+            txtPreparate.kill(); // Ocultamos el texto
+            flappy.body.gravity.y = 1200; // Activamos la gravedad
+            timer = juego.time.events.loop(1500, this.crearColumna, this); // Arrancamos los tubos
+            emitterAura.start(false, 400, 50); // Encendemos el aura
+        }
 		
 		flappy.body.velocity.y = -350;
 		juego.add.tween(flappy).to({angle:-20}, 100).start();
 
-        // NUEVO: Explosión de humo en los pies al saltar
         emitterSalto.x = flappy.x - 10;
         emitterSalto.y = flappy.y + 15;
-        emitterSalto.start(true, 500, null, 6); // 6 partículas por salto
+        emitterSalto.start(true, 500, null, 6); 
 
 		if (sonidoSalto) sonidoSalto.play();
 	},
@@ -232,29 +292,25 @@ const Juego = {
             this.mostrarMensajeEpico("¡IMPARABLE!");
             juego.add.tween(bg).to({tint: 0xFF8C00}, 3000, Phaser.Easing.Linear.None, true);
         }
-
-        // NUEVO: Creación de Estrellas de fondo al hacerse de Noche
         if (puntos === 25) {
             this.mostrarMensajeEpico("¡NIVEL DIOS!");
-            juego.add.tween(bg).to({tint: 0x1A0B2E}, 3000, Phaser.Easing.Linear.None, true); // Azul muy oscuro
+            juego.add.tween(bg).to({tint: 0x1A0B2E}, 3000, Phaser.Easing.Linear.None, true); 
             
-            // Generamos 35 estrellitas que parpadearán infinitamente
             for (let i = 0; i < 35; i++) {
                 let x = Math.random() * 370;
-                let y = Math.random() * 450; // Para que no aparezcan en el suelo
+                let y = Math.random() * 450; 
                 let estrellaFondo = juego.add.sprite(x, y, 'imgAura');
                 estrellaFondo.tint = 0xFFFFFF;
-                estrellaFondo.alpha = 0; // Empiezan invisibles
-                estrellaFondo.scale.setTo(Math.random() * 0.4 + 0.1); // Tamaños variados
+                estrellaFondo.alpha = 0; 
+                estrellaFondo.scale.setTo(Math.random() * 0.4 + 0.1); 
                 grupoEstrellasNoche.add(estrellaFondo);
                 
-                // Efecto Tween de parpadeo suave asincrónico
                 juego.add.tween(estrellaFondo).to(
                     {alpha: Math.random() * 0.8 + 0.2}, 
                     2000 + Math.random() * 2000, 
                     Phaser.Easing.Sinusoidal.InOut, 
                     true, 
-                    3000, // Esperan 3 segundos para que termine el atardecer antes de aparecer
+                    3000, 
                     -1, 
                     true
                 );
@@ -273,12 +329,9 @@ const Juego = {
 			
 			estrella.width = 32;
 			estrella.height = 32;
-            estrella.anchor.setTo(0.5, 0.5); // Centrar anclaje para rotación correcta
+            estrella.anchor.setTo(0.5, 0.5); 
 			estrella.body.velocity.x = -180; 
-            
-            // NUEVO: Rotación constante y brillante para la esfera
-            estrella.body.angularVelocity = 120; // Gira sobre sí misma en el aire
-            
+            estrella.body.angularVelocity = 120; 
 			estrella.checkWorldBounds = true;
 			estrella.outOfBoundsKill = true;
 		}
@@ -326,7 +379,7 @@ const Juego = {
             
             flappy.alive = false;
             emitterAura.on = false; 
-            grupoLineas.setAll('body.velocity.x', 0); // Detener el viento
+            grupoLineas.setAll('body.velocity.x', 0); 
             juego.time.events.remove(timer);
             tubos.forEachAlive(t => t.body.velocity.x = 0);
             estrellas.forEachAlive(e => e.body.velocity.x = 0);
@@ -334,7 +387,7 @@ const Juego = {
             flappy.body.gravity.y = 0; 
             flappy.body.velocity.y = -50; 
             flappy.tint = 0xFFD700; 
-            flappy.angle = 0; // Enderezar al personaje para su ascensión divina
+            flappy.angle = 0; 
 
             if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
@@ -354,17 +407,22 @@ const Juego = {
 		
 		flappy.alive = false;
 		emitterAura.on = false; 
-        grupoLineas.setAll('body.velocity.x', 0); // Detener el viento
+        grupoLineas.setAll('body.velocity.x', 0); 
 		juego.time.events.remove(timer);
 		
 		tubos.forEachAlive(t => t.body.velocity.x = 0);
 		estrellas.forEachAlive(e => e.body.velocity.x = 0);
-        estrellas.forEachAlive(e => e.body.angularVelocity = 0); // Detener rotación de las esferas
+        estrellas.forEachAlive(e => e.body.angularVelocity = 0); 
 
 		flappy.body.gravity.y = 99999;    
         
         flappy.body.angularVelocity = 800; 
         flappy.tint = 0xFF0000; 
+
+        // NUEVO: Emitir escombros al chocar
+        emitterChoque.x = flappy.x + 10;
+        emitterChoque.y = flappy.y;
+        emitterChoque.start(true, 1000, null, 15);
 
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
