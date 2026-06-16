@@ -8,7 +8,7 @@ let timer;
 let puntos;
 let txtPuntos;
 let txtPreparate;      
-let indicadorTap;      // NUEVO: Indicador visual de toque
+let indicadorTap;      
 let estrellas;
 let estrellasObtenidas;
 let txtEstrellas;
@@ -52,8 +52,11 @@ const Juego = {
 	create() {
 		juego.renderer.renderSession.roundPixels = true;
         juegoIniciado = false; 
-        juego.nuevoRecord = false; // Resetear la variable de récord
-        juego.paused = false; // Asegurarnos de que el juego no inicie pausado
+        juego.nuevoRecord = false; 
+        juego.paused = false; 
+        
+        // NUEVO: Variable para el temporizador Antirrebote
+        this.tiempoUltimoSalto = 0;
 
         juego.camera.flash(0x000000, 600);
 
@@ -166,12 +169,14 @@ const Juego = {
 		salto = juego.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 		salto.onDown.add(this.saltar, this);
 		
-        // Lógica mejorada para saltos y reanudar pausa
-        juego.input.onDown.add(() => {
+        // NUEVO: Controlamos que al tocar la pantalla, no salte si tocamos el botón de pausa
+        juego.input.onDown.add((pointer) => {
             if (juego.paused) {
                 juego.paused = false;
                 if (this.cartelPausa) this.cartelPausa.destroy();
             } else {
+                // Si el toque fue en el botón de pausa, ignoramos el salto principal
+                if (pointer.y < 50 && pointer.x > juego.width - 60) return;
                 this.saltar();
             }
         }, this);
@@ -195,7 +200,6 @@ const Juego = {
         txtPreparate.anchor.setTo(0.5);
         juego.add.tween(txtPreparate.scale).to({x: 1.1, y: 1.1}, 500, Phaser.Easing.Sinusoidal.InOut, true, 0, -1, true);
 
-        // INDICADOR VISUAL DE TOQUE (Tap Indicator)
         const bmdTap = juego.add.bitmapData(40, 40);
         bmdTap.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         bmdTap.ctx.beginPath();
@@ -208,15 +212,14 @@ const Juego = {
         juego.add.tween(indicadorTap.scale).to({x: 1.5, y: 1.5}, 600, Phaser.Easing.Linear.None, true, 0, -1);
         juego.add.tween(indicadorTap).to({alpha: 0}, 600, Phaser.Easing.Linear.None, true, 0, -1);
 
-        // BOTÓN DE PAUSA
         const bmdPausa = juego.add.bitmapData(40, 40);
-        bmdPausa.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; // Fondo semitransparente
+        bmdPausa.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
         bmdPausa.ctx.fill();
-        bmdPausa.ctx.fillStyle = '#FFFFFF'; // Barras blancas
+        bmdPausa.ctx.fillStyle = '#FFFFFF'; 
         bmdPausa.ctx.fillRect(12, 10, 6, 20);
         bmdPausa.ctx.fillRect(22, 10, 6, 20);
         
-        let btnPausa = juego.add.sprite(juego.width - 120, 17, bmdPausa);
+        let btnPausa = juego.add.sprite(juego.width - 50, 17, bmdPausa);
         btnPausa.inputEnabled = true;
         btnPausa.events.onInputDown.add(() => {
             if (!juegoIniciado || !flappy.alive) return;
@@ -279,11 +282,17 @@ const Juego = {
 	saltar() {
         if (!flappy.alive || juego.paused) return;
 
+        // NUEVO: Prevención de doble toque / Ghost clicks (Temporizador antirrebote de 150ms)
+        if (juego.time.now < this.tiempoUltimoSalto + 150) {
+            return; // Si el jugador toca demasiado rápido, ignoramos este salto extra
+        }
+        this.tiempoUltimoSalto = juego.time.now;
+
         if (!juegoIniciado) {
             juegoIniciado = true;
             this.tweenFlote.stop(); 
             txtPreparate.kill(); 
-            indicadorTap.kill(); // Destruimos la animación del Tap
+            indicadorTap.kill(); 
             flappy.body.gravity.y = 1200; 
             timer = juego.time.events.loop(1500, this.crearColumna, this); 
             emitterAura.start(false, 400, 50); 
@@ -449,7 +458,7 @@ const Juego = {
 		const recordPuntos = Number(localStorage.getItem('recordPuntos')) || 0;
 		if (puntos > recordPuntos) {
             localStorage.setItem('recordPuntos', puntos);
-            juego.nuevoRecord = true; // Avisamos que hay un récord nuevo
+            juego.nuevoRecord = true; 
         }
 		
 		const recordEstrellas = Number(localStorage.getItem('recordEstrellas')) || 0;
