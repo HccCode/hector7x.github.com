@@ -12,6 +12,9 @@ let txtEstrellas;
 let imgEstrella;
 let emitterEstrellas; 
 let emitterAura; 
+let emitterSalto;      // NUEVO: Emisor para el humo al saltar
+let grupoLineas;       // NUEVO: Grupo para las líneas de velocidad
+let grupoEstrellasNoche; // NUEVO: Grupo para el cielo nocturno
 let sonidoSalto;      
 let sonidoEstrella;  
 let sonidoFondo;      
@@ -45,10 +48,13 @@ const Juego = {
 	create() {
 		juego.renderer.renderSession.roundPixels = true;
 
-        // --- TRANSICIÓN: FADE IN AL INICIAR ---
         juego.camera.flash(0x000000, 600);
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
+        bg.tint = 0xFFFFFF; // Día
+
+        // NUEVO: Capa de estrellas nocturnas (Detrás del suelo y los tubos)
+        grupoEstrellasNoche = juego.add.group();
 
 		const bmd = juego.add.bitmapData(370, 90);
 		bmd.ctx.fillStyle = '#5A3A22';
@@ -63,6 +69,15 @@ const Juego = {
 
 		juego.physics.startSystem(Phaser.Physics.ARCADE);
 		
+        // NUEVO: Generación de Líneas de Velocidad (Viento anime)
+        const bmdLinea = juego.add.bitmapData(80, 2);
+        bmdLinea.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        bmdLinea.ctx.fillRect(0, 0, 80, 2);
+        juego.cache.addImage('imgLinea', null, bmdLinea.canvas);
+        
+        grupoLineas = juego.add.group();
+        grupoLineas.enableBody = true;
+
 		tubos = juego.add.group();
 		tubos.enableBody = true;
 		tubos.createMultiple(20, 'tubo'); 
@@ -73,6 +88,7 @@ const Juego = {
 
 		const colorSeleccionado = coloresAura[personajeSeleccionado] || 0xFFFF00;
 
+        // Partículas del Aura de Ki
 		const bmdAura = juego.add.bitmapData(12, 12);
 		bmdAura.ctx.fillStyle = '#FFFFFF';
 		bmdAura.ctx.beginPath();
@@ -89,9 +105,18 @@ const Juego = {
 		emitterAura.setScale(0.8, 0, 0.2, 0, 400); 
 		emitterAura.start(false, 400, 50); 
 
+        // NUEVO: Partículas para el Polvo al Saltar
+        emitterSalto = juego.add.emitter(0, 0, 30);
+        emitterSalto.makeParticles('imgAura'); // Reciclamos la imagen del aura redonda
+        emitterSalto.forEach(p => p.tint = 0xDDDDDD); // Color humo gris claro
+        emitterSalto.setXSpeed(-120, -50); // Sale empujado hacia atrás
+        emitterSalto.setYSpeed(50, 150);   // Cae hacia abajo al saltar
+        emitterSalto.setAlpha(0.8, 0, 500); 
+        emitterSalto.setScale(0.8, 0, 0.8, 0, 500); 
+
 		flappy = juego.add.sprite(100, 245, personajeSeleccionado);
 		flappy.frame = 1;
-		flappy.anchor.setTo(0.5, 0.5); // Centramos el punto de anclaje para rotar bonito
+		flappy.anchor.setTo(0.5, 0.5); 
 		flappy.animations.add('vuelo', [2,1,0], 10, true);
 
 		juego.physics.arcade.enable(flappy);
@@ -123,7 +148,7 @@ const Juego = {
 		puntos = -1;
 		const estiloMarcador = {font: "34px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5};
 		txtPuntos = juego.add.text(20, 20, "0", estiloMarcador);
-        txtPuntos.anchor.setTo(0, 0.5); // Anclaje centrado para que el "latido" se vea bien
+        txtPuntos.anchor.setTo(0, 0.5); 
 
 		estrellasObtenidas = 0;
 		imgEstrella = juego.add.sprite(juego.width - 70, 20, '4star');
@@ -137,7 +162,6 @@ const Juego = {
 	},
 
 	update() {
-		// Ajuste para el Aura debido al cambio de anclaje
 		emitterAura.x = flappy.x - 20;
 		emitterAura.y = flappy.y;
 
@@ -148,6 +172,20 @@ const Juego = {
 		} else if (flappy.alive) {
 			bg.tilePosition.x -= 1;   
 			suelo.tilePosition.x -= 4;  
+
+            // NUEVO: Spawneo aleatorio de Líneas de Velocidad (Viento Anime)
+            if (Math.random() < 0.15) { // 15% de probabilidad por fotograma
+                let linea = grupoLineas.getFirstDead();
+                const yRandom = Math.random() * 450;
+                if (!linea) {
+                    linea = grupoLineas.create(400, yRandom, 'imgLinea');
+                } else {
+                    linea.reset(400, yRandom);
+                }
+                linea.body.velocity.x = -600; // Pasan extremadamente rápido
+                linea.checkWorldBounds = true;
+                linea.outOfBoundsKill = true;
+            }
 		}
 
 		juego.physics.arcade.overlap(flappy, tubos, this.tocoTubo, null, this);
@@ -166,6 +204,12 @@ const Juego = {
 		
 		flappy.body.velocity.y = -350;
 		juego.add.tween(flappy).to({angle:-20}, 100).start();
+
+        // NUEVO: Explosión de humo en los pies al saltar
+        emitterSalto.x = flappy.x - 10;
+        emitterSalto.y = flappy.y + 15;
+        emitterSalto.start(true, 500, null, 6); // 6 partículas por salto
+
 		if (sonidoSalto) sonidoSalto.play();
 	},
 	
@@ -180,9 +224,41 @@ const Juego = {
 		puntos += 1;
 		txtPuntos.text = puntos;
 
-        // --- ANIMACIÓN DE PUNTOS: LATIDO DEL MARCADOR ---
         if (puntos > 0) {
             juego.add.tween(txtPuntos.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
+        }
+
+        if (puntos === 10) {
+            this.mostrarMensajeEpico("¡IMPARABLE!");
+            juego.add.tween(bg).to({tint: 0xFF8C00}, 3000, Phaser.Easing.Linear.None, true);
+        }
+
+        // NUEVO: Creación de Estrellas de fondo al hacerse de Noche
+        if (puntos === 25) {
+            this.mostrarMensajeEpico("¡NIVEL DIOS!");
+            juego.add.tween(bg).to({tint: 0x1A0B2E}, 3000, Phaser.Easing.Linear.None, true); // Azul muy oscuro
+            
+            // Generamos 35 estrellitas que parpadearán infinitamente
+            for (let i = 0; i < 35; i++) {
+                let x = Math.random() * 370;
+                let y = Math.random() * 450; // Para que no aparezcan en el suelo
+                let estrellaFondo = juego.add.sprite(x, y, 'imgAura');
+                estrellaFondo.tint = 0xFFFFFF;
+                estrellaFondo.alpha = 0; // Empiezan invisibles
+                estrellaFondo.scale.setTo(Math.random() * 0.4 + 0.1); // Tamaños variados
+                grupoEstrellasNoche.add(estrellaFondo);
+                
+                // Efecto Tween de parpadeo suave asincrónico
+                juego.add.tween(estrellaFondo).to(
+                    {alpha: Math.random() * 0.8 + 0.2}, 
+                    2000 + Math.random() * 2000, 
+                    Phaser.Easing.Sinusoidal.InOut, 
+                    true, 
+                    3000, // Esperan 3 segundos para que termine el atardecer antes de aparecer
+                    -1, 
+                    true
+                );
+            }
         }
 
 		if (puntos > 0 && puntos % 22 === 0) {
@@ -197,7 +273,12 @@ const Juego = {
 			
 			estrella.width = 32;
 			estrella.height = 32;
-			estrella.body.velocity.x = -180;
+            estrella.anchor.setTo(0.5, 0.5); // Centrar anclaje para rotación correcta
+			estrella.body.velocity.x = -180; 
+            
+            // NUEVO: Rotación constante y brillante para la esfera
+            estrella.body.angularVelocity = 120; // Gira sobre sí misma en el aire
+            
 			estrella.checkWorldBounds = true;
 			estrella.outOfBoundsKill = true;
 		}
@@ -207,26 +288,35 @@ const Juego = {
 		const tubo = tubos.getFirstDead();
 		if (tubo) {
 			tubo.reset(x, y);
-			tubo.body.velocity.x = -180;
+			tubo.body.velocity.x = -180; 
 			tubo.checkWorldBounds = true;
 			tubo.outOfBoundsKill = true;
 		}
 	},
 
+    mostrarMensajeEpico(texto) {
+        let txtEpico = juego.add.text(juego.width/2, juego.height/2, texto, {font: "40px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 6, align: "center"});
+        txtEpico.anchor.setTo(0.5);
+        txtEpico.alpha = 0;
+        
+        juego.add.tween(txtEpico.scale).from({x: 0, y: 0}, 500, Phaser.Easing.Bounce.Out, true);
+        juego.add.tween(txtEpico).to({alpha: 1}, 200, Phaser.Easing.Linear.None, true, 0, 0, false).onComplete.add(() => {
+            juego.add.tween(txtEpico).to({alpha: 0, y: txtEpico.y - 50}, 1000, Phaser.Easing.Linear.None, true, 1000).onComplete.add(() => txtEpico.kill());
+        });
+    },
+
 	tomarEstrella(flappy, estrella) {
-        // --- POP-UP FLOTANTE "+1" ---
         let txtPlus = juego.add.text(estrella.x, estrella.y - 20, "+1", {font: "24px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 4});
         juego.add.tween(txtPlus).to({y: txtPlus.y - 50, alpha: 0}, 800, Phaser.Easing.Cubic.Out, true).onComplete.add(() => txtPlus.kill());
 
-		emitterEstrellas.x = estrella.x + (estrella.width / 2);
-		emitterEstrellas.y = estrella.y + (estrella.height / 2);
+		emitterEstrellas.x = estrella.x;
+		emitterEstrellas.y = estrella.y;
 		emitterEstrellas.start(true, 800, null, 12);
 
 		estrella.kill(); 
 		estrellasObtenidas += 1;
 		txtEstrellas.text = estrellasObtenidas;
         
-        // Latido del marcador de estrellas
         juego.add.tween(txtEstrellas.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
 		
 		if (sonidoEstrella) sonidoEstrella.play();
@@ -234,21 +324,22 @@ const Juego = {
 		if (estrellasObtenidas >= 7) {
 			juego.ganaste = true;
             
-            // --- NUEVA SECUENCIA ÉPICA DE VICTORIA ---
             flappy.alive = false;
             emitterAura.on = false; 
+            grupoLineas.setAll('body.velocity.x', 0); // Detener el viento
             juego.time.events.remove(timer);
             tubos.forEachAlive(t => t.body.velocity.x = 0);
             estrellas.forEachAlive(e => e.body.velocity.x = 0);
             
-            flappy.body.gravity.y = 0; // Se detiene la gravedad
-            flappy.body.velocity.y = -50; // El personaje flota hacia el cielo
-            flappy.tint = 0xFFD700; // Brilla en Dorado (Ki Divino)
+            flappy.body.gravity.y = 0; 
+            flappy.body.velocity.y = -50; 
+            flappy.tint = 0xFFD700; 
+            flappy.angle = 0; // Enderezar al personaje para su ascensión divina
 
             if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
-            juego.camera.flash(0xFFFFFF, 500); // Destello blanco de victoria
-            juego.camera.fade(0x000000, 1500); // Fundido a negro lento
+            juego.camera.flash(0xFFFFFF, 500); 
+            juego.camera.fade(0x000000, 1500); 
 
             this.guardarRecord();
 
@@ -263,25 +354,27 @@ const Juego = {
 		
 		flappy.alive = false;
 		emitterAura.on = false; 
+        grupoLineas.setAll('body.velocity.x', 0); // Detener el viento
 		juego.time.events.remove(timer);
 		
 		tubos.forEachAlive(t => t.body.velocity.x = 0);
 		estrellas.forEachAlive(e => e.body.velocity.x = 0);
+        estrellas.forEachAlive(e => e.body.angularVelocity = 0); // Detener rotación de las esferas
 
 		flappy.body.gravity.y = 99999;    
-
-        // --- FEEDBACK VISUAL DE DAÑO EXTREMO ---
-        flappy.tint = 0xFF0000; // Se tiñe de sangre/rojo al golpearse
+        
+        flappy.body.angularVelocity = 800; 
+        flappy.tint = 0xFF0000; 
 
 		if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
 
-		juego.camera.flash(0xFF0000, 300); // Flash rojo de dolor
+		juego.camera.flash(0xFF0000, 300); 
 		juego.camera.shake(0.02, 300);     
-        juego.camera.fade(0x000000, 1000); // Fundido a negro (muerte)
+        juego.camera.fade(0x000000, 1200); 
 
 		this.guardarRecord();
 
-		juego.time.events.add(1000, () => {
+		juego.time.events.add(1200, () => {
 			this.state.start('Game_Over');
 		}, this);
 	},
