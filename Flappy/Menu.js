@@ -1,16 +1,19 @@
 const Menu = {
 
-    // NUEVO: Configuración responsiva para móviles
     init() {
-        // 1. Escalar al máximo tamaño posible sin perder proporciones (calidad intacta)
-        juego.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        // Detectamos si el usuario está en un celular o tablet
+        if (!juego.device.desktop) {
+            // Configuración EXCLUSIVA para móviles: Escalar al máximo tamaño posible
+            juego.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+            juego.scale.forceOrientation(false, true);
+        } else {
+            // Configuración para PC: Mantener el tamaño original (370x550)
+            juego.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
+        }
         
-        // 2. Centrar el juego exactamente en el medio de la pantalla
+        // Sin importar si es PC o móvil, centramos el lienzo en la pantalla
         juego.scale.pageAlignHorizontally = true;
         juego.scale.pageAlignVertically = true;
-        
-        // 3. Forzar a que el juego se vea en vertical (Portrait)
-        juego.scale.forceOrientation(false, true);
     },
 
 	preload() {
