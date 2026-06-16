@@ -8,6 +8,7 @@ let timer;
 let puntos;
 let txtPuntos;
 let txtPreparate;      
+let indicadorTap;      // NUEVO: Indicador visual de toque
 let estrellas;
 let estrellasObtenidas;
 let txtEstrellas;
@@ -51,6 +52,8 @@ const Juego = {
 	create() {
 		juego.renderer.renderSession.roundPixels = true;
         juegoIniciado = false; 
+        juego.nuevoRecord = false; // Resetear la variable de récord
+        juego.paused = false; // Asegurarnos de que el juego no inicie pausado
 
         juego.camera.flash(0x000000, 600);
 
@@ -162,7 +165,16 @@ const Juego = {
 
 		salto = juego.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 		salto.onDown.add(this.saltar, this);
-		juego.input.onDown.add(this.saltar, this);
+		
+        // Lógica mejorada para saltos y reanudar pausa
+        juego.input.onDown.add(() => {
+            if (juego.paused) {
+                juego.paused = false;
+                if (this.cartelPausa) this.cartelPausa.destroy();
+            } else {
+                this.saltar();
+            }
+        }, this);
 
 		puntos = 0; 
 		const estiloMarcador = {font: "34px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5};
@@ -179,9 +191,39 @@ const Juego = {
 		txtEstrellas.anchor.setTo(0, 0.5);
 		txtEstrellas.fixedToCamera = true;
 
-        txtPreparate = juego.add.text(juego.width/2, juego.height/2 + 50, "TOCA PARA VOLAR", {font: "28px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 5, align: "center"});
+        txtPreparate = juego.add.text(juego.width/2, juego.height/2 + 30, "TOCA PARA VOLAR", {font: "28px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 5, align: "center"});
         txtPreparate.anchor.setTo(0.5);
         juego.add.tween(txtPreparate.scale).to({x: 1.1, y: 1.1}, 500, Phaser.Easing.Sinusoidal.InOut, true, 0, -1, true);
+
+        // INDICADOR VISUAL DE TOQUE (Tap Indicator)
+        const bmdTap = juego.add.bitmapData(40, 40);
+        bmdTap.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        bmdTap.ctx.beginPath();
+        bmdTap.ctx.arc(20, 20, 20, 0, Math.PI * 2);
+        bmdTap.ctx.fill();
+        juego.cache.addImage('imgTap', null, bmdTap.canvas);
+
+        indicadorTap = juego.add.sprite(juego.width/2, juego.height/2 + 80, 'imgTap');
+        indicadorTap.anchor.setTo(0.5);
+        juego.add.tween(indicadorTap.scale).to({x: 1.5, y: 1.5}, 600, Phaser.Easing.Linear.None, true, 0, -1);
+        juego.add.tween(indicadorTap).to({alpha: 0}, 600, Phaser.Easing.Linear.None, true, 0, -1);
+
+        // BOTÓN DE PAUSA
+        const bmdPausa = juego.add.bitmapData(40, 40);
+        bmdPausa.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; // Fondo semitransparente
+        bmdPausa.ctx.fill();
+        bmdPausa.ctx.fillStyle = '#FFFFFF'; // Barras blancas
+        bmdPausa.ctx.fillRect(12, 10, 6, 20);
+        bmdPausa.ctx.fillRect(22, 10, 6, 20);
+        
+        let btnPausa = juego.add.sprite(juego.width - 120, 17, bmdPausa);
+        btnPausa.inputEnabled = true;
+        btnPausa.events.onInputDown.add(() => {
+            if (!juegoIniciado || !flappy.alive) return;
+            juego.paused = true;
+            this.cartelPausa = juego.add.text(juego.width/2, juego.height/2, "JUEGO PAUSADO\nToca la pantalla para continuar", {font: "28px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 5, align: "center"});
+            this.cartelPausa.anchor.setTo(0.5);
+        }, this);
 	},
 
 	update() {
@@ -235,12 +277,13 @@ const Juego = {
 	},
 	
 	saltar() {
-        if (!flappy.alive) return;
+        if (!flappy.alive || juego.paused) return;
 
         if (!juegoIniciado) {
             juegoIniciado = true;
             this.tweenFlote.stop(); 
             txtPreparate.kill(); 
+            indicadorTap.kill(); // Destruimos la animación del Tap
             flappy.body.gravity.y = 1200; 
             timer = juego.time.events.loop(1500, this.crearColumna, this); 
             emitterAura.start(false, 400, 50); 
@@ -404,9 +447,14 @@ const Juego = {
 
 	guardarRecord() {
 		const recordPuntos = Number(localStorage.getItem('recordPuntos')) || 0;
-		if (puntos > recordPuntos) localStorage.setItem('recordPuntos', puntos);
+		if (puntos > recordPuntos) {
+            localStorage.setItem('recordPuntos', puntos);
+            juego.nuevoRecord = true; // Avisamos que hay un récord nuevo
+        }
 		
 		const recordEstrellas = Number(localStorage.getItem('recordEstrellas')) || 0;
-		if (estrellasObtenidas > recordEstrellas) localStorage.setItem('recordEstrellas', estrellasObtenidas);
+		if (estrellasObtenidas > recordEstrellas) {
+            localStorage.setItem('recordEstrellas', estrellasObtenidas);
+        }
 	}
 };
