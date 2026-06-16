@@ -1,5 +1,18 @@
 const Menu = {
 
+    // NUEVO: Configuración responsiva para móviles
+    init() {
+        // 1. Escalar al máximo tamaño posible sin perder proporciones (calidad intacta)
+        juego.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+        
+        // 2. Centrar el juego exactamente en el medio de la pantalla
+        juego.scale.pageAlignHorizontally = true;
+        juego.scale.pageAlignVertically = true;
+        
+        // 3. Forzar a que el juego se vea en vertical (Portrait)
+        juego.scale.forceOrientation(false, true);
+    },
+
 	preload() {
 		juego.stage.backgroundColor = "#FFF";
 		juego.load.image('bg', "img/bg2.jpeg"); 
@@ -13,7 +26,6 @@ const Menu = {
 	create() {
 		this.bgMenu = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 
-        // EFECTO DE KI FLOTANTE EN EL MENÚ
         const bmdKi = juego.add.bitmapData(6, 6);
         bmdKi.ctx.fillStyle = '#FFD700';
         bmdKi.ctx.beginPath();
@@ -30,7 +42,6 @@ const Menu = {
         emitterKi.setScale(0.5, 1.5, 0.5, 1.5, 2000);
         emitterKi.start(false, 3000, 100);
 
-        // MOSTRAR EL RÉCORD ACTUAL PARA MOTIVAR AL JUGADOR
         const recordActual = Number(localStorage.getItem('recordPuntos')) || 0;
         const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACIÓN: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
         txtMejorPuntuacion.anchor.setTo(0.5);

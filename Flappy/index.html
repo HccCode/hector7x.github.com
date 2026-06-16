@@ -6,17 +6,33 @@
 	
 	<link rel="icon" href="img/4star.png" type="image/png">
 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* Fondo negro para que los espacios vacíos se vean cinemáticos */
+            overflow: hidden; /* Evita que la pantalla se pueda deslizar o hacer scroll */
+        }
+        #bloque_juego {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Centra el lienzo verticalmente */
+        }
+    </style>
+
 	<script src="phaser.js"></script>
 	<script src="Menu.js"></script>
 	<script src="juego.js"></script>
 	<script src="gameover.js"></script>
 	<script src="principal.js"></script>
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
-<body style="background-color:black;">
-
-<div align="center" id="bloque_juego"></div>
-
+<body>
+    <div id="bloque_juego"></div>
 </body>
 </html>
