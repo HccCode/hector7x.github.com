@@ -46,7 +46,7 @@ const Menu = {
         emitterKi.start(false, 3000, 100);
 
         const recordActual = Number(localStorage.getItem('recordPuntos')) || 0;
-        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACIÓN: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
+        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACION: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
         txtMejorPuntuacion.anchor.setTo(0.5);
 
 		const txtTitulo1 = juego.add.text(juego.width/2, 80, "FLAPPY", {font: "45px Impact", fill: "#FF4500", stroke: "#FFF", strokeThickness: 6, align: "center"});
