@@ -1,6 +1,6 @@
 let bg;
-let capaAtmosfera;     // NUEVO: Filtro para el atardecer
-let capaNoche;         // NUEVO: Filtro para la noche
+let capaAtmosfera;     
+let capaNoche;         
 let suelo; 
 let grupoNubes;        
 let tubos;
@@ -24,6 +24,7 @@ let sonidoSalto;
 let sonidoEstrella;  
 let sonidoFondo;      
 
+// Se inicializa, pero será sobreescrito por el Menu.js
 let personajeSeleccionado = 'personaje1'; 
 let juegoIniciado = false; 
 
@@ -62,18 +63,15 @@ const Juego = {
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
 
-        // --- SOLUCIÓN DEL PARPADEO: Capas de transición atmosférica ---
-        // Capa para el Atardecer
         capaAtmosfera = juego.add.graphics(0, 0);
-        capaAtmosfera.beginFill(0xFF4500); // Color naranja/rojizo
+        capaAtmosfera.beginFill(0xFF4500); 
         capaAtmosfera.drawRect(0, 0, 370, 550);
-        capaAtmosfera.alpha = 0; // Empieza invisible
+        capaAtmosfera.alpha = 0; 
 
-        // Capa para la Noche
         capaNoche = juego.add.graphics(0, 0);
-        capaNoche.beginFill(0x0B001A); // Color azul ultra oscuro
+        capaNoche.beginFill(0x0B001A); 
         capaNoche.drawRect(0, 0, 370, 550);
-        capaNoche.alpha = 0; // Empieza invisible
+        capaNoche.alpha = 0; 
 
         grupoEstrellasNoche = juego.add.group();
 
@@ -328,14 +326,12 @@ const Juego = {
             juego.add.tween(txtPuntos.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
         }
 
-        // --- LAS TRANSICIONES SUAVES ---
+        // Transiciones
         if (puntos === 10) {
-            // Anima el canal de opacidad del filtro de atardecer
             juego.add.tween(capaAtmosfera).to({alpha: 0.5}, 3000, Phaser.Easing.Linear.None, true);
         }
         
         if (puntos === 25) {
-            // Anima la opacidad del filtro de Noche
             juego.add.tween(capaNoche).to({alpha: 0.8}, 3000, Phaser.Easing.Linear.None, true); 
             
             for (let i = 0; i < 35; i++) {
@@ -389,6 +385,17 @@ const Juego = {
 		}
 	},
 
+    mostrarMensajeEpico(texto) {
+        let txtEpico = juego.add.text(juego.width/2, juego.height/2, texto, {font: "40px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 6, align: "center"});
+        txtEpico.anchor.setTo(0.5);
+        txtEpico.alpha = 0;
+        
+        juego.add.tween(txtEpico.scale).from({x: 0, y: 0}, 500, Phaser.Easing.Bounce.Out, true);
+        juego.add.tween(txtEpico).to({alpha: 1}, 200, Phaser.Easing.Linear.None, true, 0, 0, false).onComplete.add(() => {
+            juego.add.tween(txtEpico).to({alpha: 0, y: txtEpico.y - 50}, 1000, Phaser.Easing.Linear.None, true, 1000).onComplete.add(() => txtEpico.kill());
+        });
+    },
+
 	tomarEstrella(flappy, estrella) {
         let txtPlus = juego.add.text(estrella.x, estrella.y - 20, "+1", {font: "24px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 4});
         juego.add.tween(txtPlus).to({y: txtPlus.y - 50, alpha: 0}, 800, Phaser.Easing.Cubic.Out, true).onComplete.add(() => txtPlus.kill());
@@ -405,30 +412,31 @@ const Juego = {
 		
 		if (sonidoEstrella) sonidoEstrella.play();
 
+        // --- NUEVA MECÁNICA: EL DESEO DE SHENLONG ---
 		if (estrellasObtenidas >= 7) {
-			juego.ganaste = true;
+			
+            // Recompensa de puntos
+            puntos += 10;
+            txtPuntos.text = puntos;
             
-            flappy.alive = false;
-            emitterAura.on = false; 
-            grupoLineas.setAll('body.velocity.x', 0); 
+            // Reiniciar esferas
+            estrellasObtenidas = 0;
+            txtEstrellas.text = estrellasObtenidas;
+
+            // Flash dorado celestial
+            juego.camera.flash(0xFFD700, 800); 
+            
+            // Letrero de deseo concedido
+            this.mostrarMensajeEpico("¡DESEO CONCEDIDO!\n+10 PUNTOS");
+
+            // Destruir todos los tubos en pantalla para darle un respiro al jugador
+            tubos.forEachAlive(t => t.kill());
+
+            // Detener temporalmente la creación de tubos por 3 segundos (Modo Invensible temporal)
             juego.time.events.remove(timer);
-            tubos.forEachAlive(t => t.body.velocity.x = 0);
-            estrellas.forEachAlive(e => e.body.velocity.x = 0);
-            
-            flappy.body.gravity.y = 0; 
-            flappy.body.velocity.y = -50; 
-            flappy.tint = 0xFFD700; 
-            flappy.angle = 0; 
-
-            if (sonidoFondo && sonidoFondo.isPlaying) sonidoFondo.stop();
-
-            juego.camera.flash(0xFFFFFF, 500); 
-            juego.camera.fade(0x000000, 1500); 
-
-            this.guardarRecord();
-
-            juego.time.events.add(1500, () => {
-                this.state.start('Game_Over');
+            juego.time.events.add(3000, () => {
+                // Volvemos a activar la creación de tubos
+                timer = juego.time.events.loop(1500, this.crearColumna, this);
             }, this);
 		}
 	},

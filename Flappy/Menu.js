@@ -1,17 +1,13 @@
 const Menu = {
 
     init() {
-        // Detectamos si el usuario está en un celular o tablet
         if (!juego.device.desktop) {
-            // Configuración EXCLUSIVA para móviles: Escalar al máximo tamaño posible
             juego.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
             juego.scale.forceOrientation(false, true);
         } else {
-            // Configuración para PC: Mantener el tamaño original (370x550)
             juego.scale.scaleMode = Phaser.ScaleManager.NO_SCALE;
         }
         
-        // Sin importar si es PC o móvil, centramos el lienzo en la pantalla
         juego.scale.pageAlignHorizontally = true;
         juego.scale.pageAlignVertically = true;
     },
@@ -46,7 +42,7 @@ const Menu = {
         emitterKi.start(false, 3000, 100);
 
         const recordActual = Number(localStorage.getItem('recordPuntos')) || 0;
-        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACION: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
+        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACIÓN: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
         txtMejorPuntuacion.anchor.setTo(0.5);
 
 		const txtTitulo1 = juego.add.text(juego.width/2, 80, "FLAPPY", {font: "45px Impact", fill: "#FF4500", stroke: "#FFF", strokeThickness: 6, align: "center"});
@@ -62,7 +58,10 @@ const Menu = {
 		this.txtNombrePersonaje = juego.add.text(juego.width/2, 335, "", {font: "28px Impact", fill: "#00FF00", stroke: "#000", strokeThickness: 5, align: "center"});
 		this.txtNombrePersonaje.anchor.setTo(0.5);
 
-		const actualizarSeleccion = (btnActivo, nombre) => {
+        // NUEVO: Leemos el personaje favorito guardado (o Goku por defecto)
+        personajeSeleccionado = localStorage.getItem('personajeFavorito') || 'personaje1';
+
+		const actualizarSeleccion = (btnActivo, nombre, idPersonaje) => {
 			[btnGoku, btnGohan, btnFrieza, btnVegeta].forEach(btn => {
 				btn.alpha = 0.4; 
 				btn.scale.setTo(1); 
@@ -70,6 +69,10 @@ const Menu = {
 			btnActivo.alpha = 1; 
 			btnActivo.scale.setTo(1.4); 
 			this.txtNombrePersonaje.text = nombre; 
+            
+            // NUEVO: Guardamos el personaje elegido en la memoria del navegador
+            localStorage.setItem('personajeFavorito', idPersonaje);
+
 			juego.add.tween(btnActivo.scale).from({x: 1, y: 1}, 200, Phaser.Easing.Bounce.Out, true);
 		};
 
@@ -77,25 +80,25 @@ const Menu = {
 
 		const btnGoku = juego.add.button(juego.width / 2 - 105, btnY, 'personaje1', () => {
 			personajeSeleccionado = 'personaje1';
-			actualizarSeleccion(btnGoku, "GOKU");
+			actualizarSeleccion(btnGoku, "GOKU", 'personaje1');
 		}, this, 1, 0, 2);
 		btnGoku.anchor.setTo(0.5);
 
 		const btnGohan = juego.add.button(juego.width / 2 - 35, btnY, 'personaje2', () => {
 			personajeSeleccionado = 'personaje2';
-			actualizarSeleccion(btnGohan, "GOHAN");
+			actualizarSeleccion(btnGohan, "GOHAN", 'personaje2');
 		}, this, 1, 0, 2);
 		btnGohan.anchor.setTo(0.5);
 
 		const btnFrieza = juego.add.button(juego.width / 2 + 35, btnY, 'personaje3', () => {
 			personajeSeleccionado = 'personaje3';
-			actualizarSeleccion(btnFrieza, "FREEZER");
+			actualizarSeleccion(btnFrieza, "FREEZER", 'personaje3');
 		}, this, 1, 0, 2);
 		btnFrieza.anchor.setTo(0.5);
 
 		const btnVegeta = juego.add.button(juego.width / 2 + 105, btnY, 'personaje4', () => {
 			personajeSeleccionado = 'personaje4';
-			actualizarSeleccion(btnVegeta, "VEGETA");
+			actualizarSeleccion(btnVegeta, "VEGETA", 'personaje4');
 		}, this, 1, 0, 2);
 		btnVegeta.anchor.setTo(0.5);
 
@@ -105,7 +108,9 @@ const Menu = {
 		const nombreInicial = personajeSeleccionado === 'personaje2' ? "GOHAN" :
 							  personajeSeleccionado === 'personaje3' ? "FREEZER" :
 							  personajeSeleccionado === 'personaje4' ? "VEGETA" : "GOKU";
-		actualizarSeleccion(btnInicial, nombreInicial);
+		
+        // Actualizamos visualmente con el personaje guardado
+        actualizarSeleccion(btnInicial, nombreInicial, personajeSeleccionado);
 
 		const boton = this.add.button(juego.width/2, 440, 'boton', this.iniciarJuego, this);
 		boton.anchor.setTo(0.5);
