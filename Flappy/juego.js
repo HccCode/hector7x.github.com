@@ -17,6 +17,7 @@ let txtEstrellas;
 let imgEstrella;
 let emitterEstrellas; 
 let emitterAura; 
+let emitterDios;       // NUEVO: Emisor para el Aura Divina (Logro)
 let emitterChoque;     
 let grupoLineas;       
 let grupoEstrellasNoche; 
@@ -24,7 +25,6 @@ let sonidoSalto;
 let sonidoEstrella;  
 let sonidoFondo;      
 
-// Se inicializa, pero será sobreescrito por el Menu.js
 let personajeSeleccionado = 'personaje1'; 
 let juegoIniciado = false; 
 
@@ -58,6 +58,9 @@ const Juego = {
         juego.nuevoRecord = false; 
         juego.paused = false; 
         this.tiempoUltimoSalto = 0;
+        
+        // Reset de la variable del emisor divino
+        emitterDios = null;
 
         juego.camera.flash(0x000000, 600);
 
@@ -113,7 +116,7 @@ const Juego = {
 
 		tubos = juego.add.group();
 		tubos.enableBody = true;
-		tubos.createMultiple(20, 'tubo'); 
+		tubos.createMultiple(25, 'tubo'); 
 
 		estrellas = juego.add.group();
 		estrellas.enableBody = true;
@@ -135,6 +138,11 @@ const Juego = {
 		emitterAura.setYSpeed(-20, 20);
 		emitterAura.setAlpha(0.6, 0, 400); 
 		emitterAura.setScale(0.8, 0, 0.2, 0, 400); 
+
+        // --- INICIALIZACIÓN RECOMPENSA: AURA DIVINA ---
+        if (localStorage.getItem('logroDios') === 'true') {
+            this.activarAuraDivina();
+        }
 
         const bmdEscombro = juego.add.bitmapData(8, 8);
         bmdEscombro.ctx.fillStyle = '#7CB342'; 
@@ -237,6 +245,16 @@ const Juego = {
         }, this);
 	},
 
+    activarAuraDivina() {
+        if (!emitterDios) {
+            emitterDios = juego.add.emitter(0, 0, 40);
+            emitterDios.makeParticles('4star'); 
+            emitterDios.setScale(0.15, 0, 0.15, 0, 600);
+            emitterDios.setXSpeed(-150, -50);
+            emitterDios.setYSpeed(-50, 50);
+        }
+    },
+
 	update() {
         bg.tilePosition.x -= 0.5;   
         suelo.tilePosition.x -= 4;  
@@ -256,6 +274,11 @@ const Juego = {
 
 		emitterAura.x = flappy.x - 20;
 		emitterAura.y = flappy.y;
+        
+        if (emitterDios && flappy.alive) {
+            emitterDios.x = flappy.x;
+            emitterDios.y = flappy.y;
+        }
 
 		if (!flappy.inWorld) {
 			this.state.start('Game_Over');
@@ -281,9 +304,7 @@ const Juego = {
 
 		if (flappy.alive) {
 			flappy.animations.play('vuelo');
-			if (flappy.angle < 20) {
-				flappy.angle += 1;        
-			}
+            flappy.angle = Math.min(Math.max(flappy.body.velocity.y * 0.12, -20), 90);
 		}
 	},
 	
@@ -303,16 +324,17 @@ const Juego = {
             flappy.body.gravity.y = 1200; 
             timer = juego.time.events.loop(1500, this.crearColumna, this); 
             emitterAura.start(false, 400, 50); 
+            
+            if (emitterDios) emitterDios.start(false, 600, 100);
         }
 		
 		flappy.body.velocity.y = -350;
-		juego.add.tween(flappy).to({angle:-20}, 100).start();
-
 		if (sonidoSalto) sonidoSalto.play();
 	},
 	
 	crearColumna() {
 		const hueco = Math.floor(Math.random()*5)+1;
+
 		for(let i = 0; i < 8; i++) {
 			if(i !== hueco && i !== hueco+1) {
 				this.crearUnTubo(371, i*57.5);
@@ -326,7 +348,14 @@ const Juego = {
             juego.add.tween(txtPuntos.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
         }
 
-        // Transiciones
+        // --- VALIDACIÓN LOGRO 2: GUERRERO LEGENDARIO (50 PUNTOS) ---
+        if (puntos === 50 && localStorage.getItem('logroDios') !== 'true') {
+            localStorage.setItem('logroDios', 'true');
+            this.mostrarMensajeEpico("¡LOGRO DESBLOQUEADO!\nAURA DIVINA");
+            this.activarAuraDivina();
+            emitterDios.start(false, 600, 100);
+        }
+
         if (puntos === 10) {
             juego.add.tween(capaAtmosfera).to({alpha: 0.5}, 3000, Phaser.Easing.Linear.None, true);
         }
@@ -386,17 +415,27 @@ const Juego = {
 	},
 
     mostrarMensajeEpico(texto) {
-        let txtEpico = juego.add.text(juego.width/2, juego.height/2, texto, {font: "40px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 6, align: "center"});
+        let txtEpico = juego.add.text(juego.width/2, juego.height/2, texto, {font: "36px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 6, align: "center"});
         txtEpico.anchor.setTo(0.5);
         txtEpico.alpha = 0;
         
         juego.add.tween(txtEpico.scale).from({x: 0, y: 0}, 500, Phaser.Easing.Bounce.Out, true);
         juego.add.tween(txtEpico).to({alpha: 1}, 200, Phaser.Easing.Linear.None, true, 0, 0, false).onComplete.add(() => {
-            juego.add.tween(txtEpico).to({alpha: 0, y: txtEpico.y - 50}, 1000, Phaser.Easing.Linear.None, true, 1000).onComplete.add(() => txtEpico.kill());
+            juego.add.tween(txtEpico).to({alpha: 0, y: txtEpico.y - 50}, 1500, Phaser.Easing.Linear.None, true, 1500).onComplete.add(() => txtEpico.kill());
         });
     },
 
 	tomarEstrella(flappy, estrella) {
+        // --- VALIDACIÓN LOGRO 1: BUSCADOR DE ESFERAS (20 GLOBALES) ---
+        let totalAcumulado = Number(localStorage.getItem('totalEstrellas')) || 0;
+        totalAcumulado += 1;
+        localStorage.setItem('totalEstrellas', totalAcumulado);
+
+        if (totalAcumulado === 20 && localStorage.getItem('logroShenlong') !== 'true') {
+            localStorage.setItem('logroShenlong', 'true');
+            this.mostrarMensajeEpico("¡LOGRO DESBLOQUEADO!\nSHENLONG EN EL MENÚ");
+        }
+
         let txtPlus = juego.add.text(estrella.x, estrella.y - 20, "+1", {font: "24px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 4});
         juego.add.tween(txtPlus).to({y: txtPlus.y - 50, alpha: 0}, 800, Phaser.Easing.Cubic.Out, true).onComplete.add(() => txtPlus.kill());
 
@@ -412,30 +451,20 @@ const Juego = {
 		
 		if (sonidoEstrella) sonidoEstrella.play();
 
-        // --- NUEVA MECÁNICA: EL DESEO DE SHENLONG ---
 		if (estrellasObtenidas >= 7) {
-			
-            // Recompensa de puntos
             puntos += 10;
             txtPuntos.text = puntos;
             
-            // Reiniciar esferas
             estrellasObtenidas = 0;
             txtEstrellas.text = estrellasObtenidas;
 
-            // Flash dorado celestial
             juego.camera.flash(0xFFD700, 800); 
-            
-            // Letrero de deseo concedido
             this.mostrarMensajeEpico("¡DESEO CONCEDIDO!\n+10 PUNTOS");
 
-            // Destruir todos los tubos en pantalla para darle un respiro al jugador
             tubos.forEachAlive(t => t.kill());
 
-            // Detener temporalmente la creación de tubos por 3 segundos (Modo Invensible temporal)
             juego.time.events.remove(timer);
             juego.time.events.add(3000, () => {
-                // Volvemos a activar la creación de tubos
                 timer = juego.time.events.loop(1500, this.crearColumna, this);
             }, this);
 		}
@@ -446,6 +475,8 @@ const Juego = {
 		
 		flappy.alive = false;
 		emitterAura.on = false; 
+        if (emitterDios) emitterDios.on = false; // Apagar aura divina al morir
+
         grupoLineas.setAll('body.velocity.x', 0); 
 		juego.time.events.remove(timer);
 		
