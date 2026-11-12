@@ -16,6 +16,7 @@ const Menu = {
 		juego.stage.backgroundColor = "#FFF";
 		juego.load.image('bg', "img/bg2.jpeg"); 
 		juego.load.image('boton', "img/btn.png");
+        juego.load.image('shenron', 'img/shenron.png'); // NUEVO: Cargamos a Shenlong para el menú
 		juego.load.spritesheet('personaje1', "img/goku.png", 50, 30);
 		juego.load.spritesheet('personaje2', "img/gohan.png", 50, 30);
 		juego.load.spritesheet('personaje3', "img/GoldenFrieza.png", 64, 20);
@@ -41,8 +42,16 @@ const Menu = {
         emitterKi.setScale(0.5, 1.5, 0.5, 1.5, 2000);
         emitterKi.start(false, 3000, 100);
 
+        // --- RECOMPENSA VISUAL: LOGRO SHENLONG ---
+        if (localStorage.getItem('logroShenlong') === 'true') {
+            const shenron = juego.add.sprite(juego.width / 2, juego.height / 2 - 40, 'shenron');
+            shenron.anchor.setTo(0.5);
+            shenron.alpha = 0.5;
+            juego.add.tween(shenron).to({ y: shenron.y - 20 }, 2500, Phaser.Easing.Sinusoidal.InOut, true, 0, -1, true);
+        }
+
         const recordActual = Number(localStorage.getItem('recordPuntos')) || 0;
-        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACI�N: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
+        const txtMejorPuntuacion = juego.add.text(juego.width/2, 25, `MEJOR PUNTUACIÓN: ${recordActual}`, {font: "16px Impact", fill: "#FFF", stroke: "#000", strokeThickness: 3, align: "center"});
         txtMejorPuntuacion.anchor.setTo(0.5);
 
 		const txtTitulo1 = juego.add.text(juego.width/2, 80, "FLAPPY", {font: "45px Impact", fill: "#FF4500", stroke: "#FFF", strokeThickness: 6, align: "center"});
@@ -58,7 +67,13 @@ const Menu = {
 		this.txtNombrePersonaje = juego.add.text(juego.width/2, 335, "", {font: "28px Impact", fill: "#00FF00", stroke: "#000", strokeThickness: 5, align: "center"});
 		this.txtNombrePersonaje.anchor.setTo(0.5);
 
-        // NUEVO: Leemos el personaje favorito guardado (o Goku por defecto)
+        // --- RECOMPENSA VISUAL: LOGRO DIOS ---
+        if (localStorage.getItem('logroDios') === 'true') {
+            const txtDios = juego.add.text(juego.width/2, 365, "✨ AURA DIVINA DESBLOQUEADA ✨", {font: "14px Impact", fill: "#FFD700", stroke: "#000", strokeThickness: 3, align: "center"});
+            txtDios.anchor.setTo(0.5);
+            juego.add.tween(txtDios).to({alpha: 0.3}, 800, Phaser.Easing.Linear.None, true, 0, -1, true);
+        }
+
         personajeSeleccionado = localStorage.getItem('personajeFavorito') || 'personaje1';
 
 		const actualizarSeleccion = (btnActivo, nombre, idPersonaje) => {
@@ -70,7 +85,6 @@ const Menu = {
 			btnActivo.scale.setTo(1.4); 
 			this.txtNombrePersonaje.text = nombre; 
             
-            // NUEVO: Guardamos el personaje elegido en la memoria del navegador
             localStorage.setItem('personajeFavorito', idPersonaje);
 
 			juego.add.tween(btnActivo.scale).from({x: 1, y: 1}, 200, Phaser.Easing.Bounce.Out, true);
@@ -109,7 +123,6 @@ const Menu = {
 							  personajeSeleccionado === 'personaje3' ? "FREEZER" :
 							  personajeSeleccionado === 'personaje4' ? "VEGETA" : "GOKU";
 		
-        // Actualizamos visualmente con el personaje guardado
         actualizarSeleccion(btnInicial, nombreInicial, personajeSeleccionado);
 
 		const boton = this.add.button(juego.width/2, 440, 'boton', this.iniciarJuego, this);
