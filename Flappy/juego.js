@@ -1,4 +1,6 @@
 let bg;
+let capaAtmosfera;     // NUEVO: Filtro para el atardecer
+let capaNoche;         // NUEVO: Filtro para la noche
 let suelo; 
 let grupoNubes;        
 let tubos;
@@ -54,14 +56,24 @@ const Juego = {
         juegoIniciado = false; 
         juego.nuevoRecord = false; 
         juego.paused = false; 
-        
-        // NUEVO: Variable para el temporizador Antirrebote
         this.tiempoUltimoSalto = 0;
 
         juego.camera.flash(0x000000, 600);
 
 		bg = juego.add.tileSprite(0, 0, 370, 550, 'bg');
-        bg.tint = 0xFFFFFF; 
+
+        // --- SOLUCIÓN DEL PARPADEO: Capas de transición atmosférica ---
+        // Capa para el Atardecer
+        capaAtmosfera = juego.add.graphics(0, 0);
+        capaAtmosfera.beginFill(0xFF4500); // Color naranja/rojizo
+        capaAtmosfera.drawRect(0, 0, 370, 550);
+        capaAtmosfera.alpha = 0; // Empieza invisible
+
+        // Capa para la Noche
+        capaNoche = juego.add.graphics(0, 0);
+        capaNoche.beginFill(0x0B001A); // Color azul ultra oscuro
+        capaNoche.drawRect(0, 0, 370, 550);
+        capaNoche.alpha = 0; // Empieza invisible
 
         grupoEstrellasNoche = juego.add.group();
 
@@ -169,13 +181,11 @@ const Juego = {
 		salto = juego.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 		salto.onDown.add(this.saltar, this);
 		
-        // NUEVO: Controlamos que al tocar la pantalla, no salte si tocamos el botón de pausa
         juego.input.onDown.add((pointer) => {
             if (juego.paused) {
                 juego.paused = false;
                 if (this.cartelPausa) this.cartelPausa.destroy();
             } else {
-                // Si el toque fue en el botón de pausa, ignoramos el salto principal
                 if (pointer.y < 50 && pointer.x > juego.width - 60) return;
                 this.saltar();
             }
@@ -282,9 +292,8 @@ const Juego = {
 	saltar() {
         if (!flappy.alive || juego.paused) return;
 
-        // NUEVO: Prevención de doble toque / Ghost clicks (Temporizador antirrebote de 150ms)
         if (juego.time.now < this.tiempoUltimoSalto + 150) {
-            return; // Si el jugador toca demasiado rápido, ignoramos este salto extra
+            return; 
         }
         this.tiempoUltimoSalto = juego.time.now;
 
@@ -319,11 +328,15 @@ const Juego = {
             juego.add.tween(txtPuntos.scale).from({x: 1.5, y: 1.5}, 200, Phaser.Easing.Bounce.Out, true);
         }
 
+        // --- LAS TRANSICIONES SUAVES ---
         if (puntos === 10) {
-            juego.add.tween(bg).to({tint: 0xFF8C00}, 3000, Phaser.Easing.Linear.None, true);
+            // Anima el canal de opacidad del filtro de atardecer
+            juego.add.tween(capaAtmosfera).to({alpha: 0.5}, 3000, Phaser.Easing.Linear.None, true);
         }
+        
         if (puntos === 25) {
-            juego.add.tween(bg).to({tint: 0x1A0B2E}, 3000, Phaser.Easing.Linear.None, true); 
+            // Anima la opacidad del filtro de Noche
+            juego.add.tween(capaNoche).to({alpha: 0.8}, 3000, Phaser.Easing.Linear.None, true); 
             
             for (let i = 0; i < 35; i++) {
                 let x = Math.random() * 370;
